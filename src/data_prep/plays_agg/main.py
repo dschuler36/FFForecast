@@ -1,0 +1,76 @@
+import pandas as pd
+import os
+from src.config import config
+
+
+def read_play_by_play_data() -> pd.DataFrame:
+    input_path = config['local']['data_paths']['inputs']['play_by_play']
+    years_to_process = ['2020', '2021', '2022', '2023']
+    df = None
+    for year in years_to_process:
+        path = os.path.join(input_path, f'play_by_play_{year}.parquet')
+        tmp_df = pd.read_parquet(path)
+        df = pd.concat([df, tmp_df])
+    return df
+
+
+def subset_plays_columns(df: pd.DataFrame) -> pd.DataFrame:
+    return df[['game_id', 'passer', 'passer_id', 'rusher', 'rusher_id', 'receiver', 'receiver_id', 'pass', 'rush',
+               'yards_gained', 'fumble', 'touchdown', 'pass_touchdown', 'rush_touchdown', 'rush_attempt',
+               'pass_attempt', 'yards_after_catch']]
+
+
+def filter_to_fantasy_plays(df: pd.DataFrame) -> pd.DataFrame:
+    return df.dropna(subset=['passer', 'rusher', 'receiver'], how='all')
+
+
+def reformat_plays_for_position(df: pd.DataFrame) -> pd.DataFrame:
+    passers = df[
+        ['game_id', 'passer', 'passer_id', 'yards_gained', 'pass_attempt', 'pass_touchdown', 'fumble']].copy()
+    passers.rename(columns={'passer': 'player', 'passer_id': 'player_id', 'yards_gained': 'passing_yards',
+                            'pass_attempt': 'passing_attempts', 'pass_touchdown': 'passing_touchdowns'}, inplace=True)
+    passers = passers.loc[passers['player_id'].notnull()]
+
+    rushers = df[
+        ['game_id', 'rusher', 'rusher_id', 'yards_gained', 'rush_attempt', 'rush_touchdown', 'fumble']].copy()
+    rushers.rename(columns={'rusher': 'player', 'rusher_id': 'player_id', 'yards_gained': 'rushing_yards',
+                            'rush_attempt': 'rushing_attempts', 'rush_touchdown': 'rushing_touchdowns'}, inplace=True)
+    rushers = rushers.loc[rushers['player_id'].notnull()]
+
+    receivers = df[['game_id', 'receiver', 'receiver_id', 'yards_gained', 'touchdown', 'fumble']].copy()
+    receivers.rename(columns={'receiver': 'player', 'receiver_id': 'player_id', 'yards_gained': 'receiving_yards',
+                              'touchdown': 'receiving_touchdowns'}, inplace=True)
+    receivers['receptions'] = 1
+    receivers.dropna(subset=['player', 'player_id'], how='all')
+    receivers = receivers.loc[receivers['player_id'].notnull()]
+
+    return pd.concat([passers, rushers, receivers], ignore_index=True)
+
+
+def agg_plays_to_game_and_player(df: pd.DataFrame) -> pd.DataFrame:
+    return df.groupby(['game_id', 'player', 'player_id']).agg(
+                        passing_attempts=('passing_attempts', 'sum'),
+                        passing_yards=('passing_yards', 'sum'),
+                        passing_touchdowns=('passing_touchdowns', 'sum'),
+                        rushing_attempts=('rushing_attempts', 'sum'),
+                        rushing_yards=('rushing_yards', 'sum'),
+                        rushing_touchdowns=('rushing_touchdowns', 'sum'),
+                        receptions=('receptions', 'sum'),
+                        receiving_yards=('receiving_yards', 'sum'),
+                        receiving_touchdowns=('receiving_touchdowns', 'sum'),
+                        fumbles=('fumble', 'sum')
+                       ).reset_index()
+
+
+def write_output(df: pd.DataFrame) -> None:
+    output_file = os.path.join(config['local']['data_paths']['outputs']['play_by_play_agg'], 'play_by_play_agg.parquet')
+    df.to_parquet(output_file, index=False)
+
+
+if __name__ == '__main__':
+    plays_df = read_play_by_play_data()
+    plays_subset_df = subset_plays_columns(plays_df)
+    fantasy_plays_df = filter_to_fantasy_plays(plays_subset_df)
+    reformatted_df = reformat_plays_for_position(fantasy_plays_df)
+    agg_plays_df = agg_plays_to_game_and_player(reformatted_df)
+    write_output(agg_plays_df)
