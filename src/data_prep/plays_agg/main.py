@@ -62,6 +62,16 @@ def agg_plays_to_game_and_player(df: pd.DataFrame) -> pd.DataFrame:
                        ).reset_index()
 
 
+def read_players_data() -> pd.DataFrame:
+    input_path = config['local']['data_paths']['inputs']['players']
+    return pd.read_parquet(os.path.join(input_path, 'players.parquet'))
+
+
+def get_player_curr_team(plays: pd.DataFrame, players: pd.DataFrame) -> pd.DataFrame:
+    players = players.rename(columns={'gsis_id': 'player_id'})
+    return pd.merge(plays, players[['player_id', 'position', 'team_abbr']], on='player_id', how='left')
+
+
 def write_output(df: pd.DataFrame) -> None:
     output_file = os.path.join(config['local']['data_paths']['outputs']['play_by_play_agg'], 'play_by_play_agg.parquet')
     df.to_parquet(output_file, index=False)
@@ -73,4 +83,8 @@ if __name__ == '__main__':
     fantasy_plays_df = filter_to_fantasy_plays(plays_subset_df)
     reformatted_df = reformat_plays_for_position(fantasy_plays_df)
     agg_plays_df = agg_plays_to_game_and_player(reformatted_df)
-    write_output(agg_plays_df)
+
+    players_df = read_players_data()
+    agg_plays_with_team = get_player_curr_team(agg_plays_df, players_df)
+
+    write_output(agg_plays_with_team)
