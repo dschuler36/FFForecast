@@ -7,7 +7,8 @@ config = {
                 "rosters": "./data/inputs/rosters/",
             },
             "outputs": {
-                "play_by_play_agg": "./data/outputs/play_by_play_agg/"
+                "play_by_play_agg": "./data/outputs/play_by_play_agg/",
+                "rosters": "./data/outputs/rosters/",
             }
 
         }

@@ -59,6 +59,12 @@ def agg_plays_to_game_and_player(df: pd.DataFrame) -> pd.DataFrame:
                        ).reset_index()
 
 
+def add_time_columns(df: pd.DataFrame) -> pd.DataFrame:
+    df['season'] = df['game_id'].str.split('_').str[0]
+    df['week'] = df['game_id'].str.split('_').str[1].astype('int')
+    return df
+
+
 def read_players_data() -> pd.DataFrame:
     input_path = config['local']['data_paths']['inputs']['players']
     return pd.read_parquet(os.path.join(input_path, 'players.parquet'))
@@ -80,8 +86,9 @@ if __name__ == '__main__':
     fantasy_plays_df = filter_to_fantasy_plays(plays_subset_df)
     reformatted_df = reformat_plays_for_position(fantasy_plays_df)
     agg_plays_df = agg_plays_to_game_and_player(reformatted_df)
+    agg_with_week_df = add_time_columns(agg_plays_df)
 
     players_df = read_players_data()
-    agg_plays_with_team = get_player_curr_team(agg_plays_df, players_df)
+    agg_plays_with_team = get_player_curr_team(agg_with_week_df, players_df)
 
     write_output(agg_plays_with_team)
