@@ -25,14 +25,12 @@ def filter_to_fantasy_plays(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def reformat_plays_for_position(df: pd.DataFrame) -> pd.DataFrame:
-    passers = df[
-        ['game_id', 'passer', 'passer_id', 'yards_gained', 'pass_attempt', 'pass_touchdown', 'fumble']].copy()
+    passers = df[['game_id', 'passer', 'passer_id', 'yards_gained', 'pass_attempt', 'pass_touchdown', 'fumble']].copy()
     passers.rename(columns={'passer': 'player', 'passer_id': 'player_id', 'yards_gained': 'passing_yards',
                             'pass_attempt': 'passing_attempts', 'pass_touchdown': 'passing_touchdowns'}, inplace=True)
     passers = passers.loc[passers['player_id'].notnull()]
 
-    rushers = df[
-        ['game_id', 'rusher', 'rusher_id', 'yards_gained', 'rush_attempt', 'rush_touchdown', 'fumble']].copy()
+    rushers = df[['game_id', 'rusher', 'rusher_id', 'yards_gained', 'rush_attempt', 'rush_touchdown', 'fumble']].copy()
     rushers.rename(columns={'rusher': 'player', 'rusher_id': 'player_id', 'yards_gained': 'rushing_yards',
                             'rush_attempt': 'rushing_attempts', 'rush_touchdown': 'rushing_touchdowns'}, inplace=True)
     rushers = rushers.loc[rushers['player_id'].notnull()]
@@ -41,7 +39,6 @@ def reformat_plays_for_position(df: pd.DataFrame) -> pd.DataFrame:
     receivers.rename(columns={'receiver': 'player', 'receiver_id': 'player_id', 'yards_gained': 'receiving_yards',
                               'touchdown': 'receiving_touchdowns'}, inplace=True)
     receivers['receptions'] = 1
-    receivers.dropna(subset=['player', 'player_id'], how='all')
     receivers = receivers.loc[receivers['player_id'].notnull()]
 
     return pd.concat([passers, rushers, receivers], ignore_index=True)
