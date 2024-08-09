@@ -17,7 +17,7 @@ def read_play_by_play_data() -> pd.DataFrame:
 def subset_plays_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df[['game_id', 'posteam', 'home_team', 'passer', 'passer_id', 'rusher', 'rusher_id', 'receiver',
                'receiver_id', 'pass', 'rush', 'yards_gained', 'fumble', 'touchdown', 'pass_touchdown', 'rush_touchdown',
-               'rush_attempt', 'pass_attempt', 'yards_after_catch']]
+               'rush_attempt', 'pass_attempt', 'yards_after_catch', 'interception']]
 
 
 def filter_to_fantasy_plays(df: pd.DataFrame) -> pd.DataFrame:
@@ -26,7 +26,7 @@ def filter_to_fantasy_plays(df: pd.DataFrame) -> pd.DataFrame:
 
 def reformat_plays_for_position(df: pd.DataFrame) -> pd.DataFrame:
     passers = df[['game_id', 'posteam', 'home_away', 'passer', 'passer_id', 'yards_gained', 'pass_attempt',
-                  'pass_touchdown', 'fumble']].copy()
+                  'pass_touchdown', 'fumble', 'interception']].copy()
     passers.rename(columns={'passer': 'player', 'passer_id': 'player_id', 'yards_gained': 'passing_yards',
                             'pass_attempt': 'passing_attempts', 'pass_touchdown': 'passing_touchdowns'}, inplace=True)
     passers = passers.loc[passers['player_id'].notnull()]
@@ -57,7 +57,8 @@ def agg_plays_to_game_and_player(df: pd.DataFrame) -> pd.DataFrame:
                         receptions=('receptions', 'sum'),
                         receiving_yards=('receiving_yards', 'sum'),
                         receiving_touchdowns=('receiving_touchdowns', 'sum'),
-                        fumbles=('fumble', 'sum')
+                        fumbles=('fumble', 'sum'),
+                        interceptions=('interception', 'sum')
                        ).reset_index()
 
 
