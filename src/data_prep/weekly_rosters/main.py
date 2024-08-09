@@ -20,7 +20,8 @@ def filter_to_active_players(df: pd.DataFrame) -> pd.DataFrame:
 
 def prep_final_dataset(df: pd.DataFrame) -> pd.DataFrame:
     df['week'] = df.week.astype(int, copy=False)
-    return df[['season', 'team', 'position', 'status', 'full_name', 'birth_date', 'height', 'weight', 'gsis_id',
+    df.rename(columns={'gsis_id': 'player_id'}, inplace=True)
+    return df[['season', 'team', 'position', 'status', 'full_name', 'birth_date', 'height', 'weight', 'player_id',
                'week', 'game_type', 'entry_year', 'draft_club', 'draft_number']]
 
 
