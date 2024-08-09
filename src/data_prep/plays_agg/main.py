@@ -15,9 +15,9 @@ def read_play_by_play_data() -> pd.DataFrame:
 
 
 def subset_plays_columns(df: pd.DataFrame) -> pd.DataFrame:
-    return df[['game_id', 'posteam', 'home_team', 'passer', 'passer_id', 'rusher', 'rusher_id', 'receiver', 'receiver_id', 'pass', 'rush',
-               'yards_gained', 'fumble', 'touchdown', 'pass_touchdown', 'rush_touchdown', 'rush_attempt',
-               'pass_attempt', 'yards_after_catch']]
+    return df[['game_id', 'posteam', 'home_team', 'passer', 'passer_id', 'rusher', 'rusher_id', 'receiver',
+               'receiver_id', 'pass', 'rush', 'yards_gained', 'fumble', 'touchdown', 'pass_touchdown', 'rush_touchdown',
+               'rush_attempt', 'pass_attempt', 'yards_after_catch']]
 
 
 def filter_to_fantasy_plays(df: pd.DataFrame) -> pd.DataFrame:
