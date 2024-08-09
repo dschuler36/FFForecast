@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pandas as pd
 import os
 from src.config import config
@@ -84,12 +86,14 @@ def create_home_away_col(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def write_output(df: pd.DataFrame) -> None:
-    output_file = os.path.join(config['local']['data_paths']['outputs']['play_by_play_agg'], 'play_by_play_agg.parquet')
+def write_output(df: pd.DataFrame, run_id) -> None:
+    output_filename = f'play_by_play_agg_{run_id}.parquet'
+    output_file = os.path.join(config['local']['data_paths']['outputs']['play_by_play_agg'], output_filename)
     df.to_parquet(output_file, index=False)
 
 
 if __name__ == '__main__':
+    run_id = '20240809'
     plays_df = read_play_by_play_data()
     plays_subset_df = subset_plays_columns(plays_df)
     fantasy_plays_df = filter_to_fantasy_plays(plays_subset_df)
@@ -101,4 +105,4 @@ if __name__ == '__main__':
     players_df = read_players_data()
     agg_plays_with_team = get_player_curr_team(agg_with_week_df, players_df)
 
-    write_output(agg_plays_with_team)
+    write_output(agg_plays_with_team, run_id)

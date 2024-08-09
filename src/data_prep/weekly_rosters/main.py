@@ -25,13 +25,15 @@ def prep_final_dataset(df: pd.DataFrame) -> pd.DataFrame:
                'week', 'game_type', 'entry_year', 'draft_club', 'draft_number']]
 
 
-def write_output(df: pd.DataFrame) -> None:
-    output_file = os.path.join(config['local']['data_paths']['outputs']['rosters'], 'rosters.parquet')
+def write_output(df: pd.DataFrame, run_id) -> None:
+    output_file = os.path.join(config['local']['data_paths']['outputs']['rosters'], f'rosters_{run_id}.parquet')
     df.to_parquet(output_file, index=False)
 
 
 if __name__ == '__main__':
+    # TODO: make input to job
+    run_id = '20240809'
     roster_df = read_roster_data()
     active_roster_df = filter_to_active_players(roster_df)
     final_df = prep_final_dataset(active_roster_df)
-    write_output(final_df)
+    write_output(final_df, run_id)
