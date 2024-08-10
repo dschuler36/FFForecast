@@ -14,14 +14,15 @@ def read_roster_data() -> pd.DataFrame:
     return df
 
 
-def filter_to_active_players(df: pd.DataFrame) -> pd.DataFrame:
-    return df.loc[df['status'] == 'ACT']
+def create_active_flag(df: pd.DataFrame) -> pd.DataFrame:
+    df['active'] = df.apply(lambda row: 1 if row['status'] == 'ACT' else 0, axis=1)
+    return df
 
 
 def prep_final_dataset(df: pd.DataFrame) -> pd.DataFrame:
     df['week'] = df.week.astype(int, copy=False)
     df.rename(columns={'gsis_id': 'player_id'}, inplace=True)
-    return df[['season', 'team', 'position', 'status', 'full_name', 'birth_date', 'height', 'weight', 'player_id',
+    return df[['season', 'team', 'position', 'status', 'active', 'full_name', 'birth_date', 'height', 'weight', 'player_id',
                'week', 'game_type', 'entry_year', 'draft_club', 'draft_number']]
 
 
@@ -34,6 +35,6 @@ if __name__ == '__main__':
     # TODO: make input to job
     run_id = '20240809'
     roster_df = read_roster_data()
-    active_roster_df = filter_to_active_players(roster_df)
+    active_roster_df = create_active_flag(roster_df)
     final_df = prep_final_dataset(active_roster_df)
     write_output(final_df, run_id)

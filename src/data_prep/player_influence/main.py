@@ -26,10 +26,39 @@ def calculate_pbp_fantasy_points(df: pd.DataFrame, pc: PointsConfig) -> pd.DataF
     return df
 
 
+def filter_rosters_to_specific_positions(df: pd.DataFrame) -> pd.DataFrame:
+    relevant_positions = ['QB', 'WR', 'RB', 'OL', 'TE']
+    return df[df['position'].isin(relevant_positions)]
+
+
+def create_roster_by_game(pbp_df: pd.DataFrame, roster_df: pd.DataFrame) -> pd.DataFrame:
+    merged_df = pbp_df.merge(
+        roster_df[['team', 'week', 'season', 'position', 'full_name', 'player_id', 'active']],
+        left_on=['team', 'week', 'season'],
+        right_on=['team', 'week', 'season'],
+        suffixes=('', '_teammate')
+    ).rename(columns={'player_id_teammate': 'teammate_id'})
+
+    return merged_df.groupby(['game_id', 'player_id', 'teammate_id', 'position'])[
+        'active'].max().reset_index()
+
+
+def collect_teammates_as_list(group) -> pd.DataFrame:
+    active_teammates = group[group['active'] == 1]['teammate_id'].tolist()
+    return pd.Series({
+        'active_teammates': active_teammates,
+        'num_active_teammates': len(active_teammates)
+    })
+
+
 if __name__ == '__main__':
     run_id = '20240809'
     pbp_agg_df = read_pbp_agg(run_id)
     rosters_df = read_rosters(run_id)
     fantasy_points_df = calculate_pbp_fantasy_points(pbp_agg_df, STANDARD_HALF_PPR)
+    filtered_rosters_df = filter_rosters_to_specific_positions(rosters_df)
+    roster_by_game_df = create_roster_by_game(pbp_agg_df, filtered_rosters_df)
+    reshaped_teammate_presence = roster_by_game_df.groupby(['game_id', 'player_id']).apply(
+        collect_teammates_as_list).reset_index()
 
-
+    print(reshaped_teammate_presence)
