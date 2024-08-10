@@ -74,8 +74,8 @@ def add_time_columns(df: pd.DataFrame) -> pd.DataFrame:
 def create_home_away_col(df: pd.DataFrame) -> pd.DataFrame:
     df = df.reset_index(drop=True)
     df['home_away'] = df.apply(lambda row: 'home' if row['posteam'] == row['home_team'] else 'away', axis=1)
-    df['team_1'] = df['game_id'].str.split('_').str[3]
-    df['team_2'] = df['game_id'].str.split('_').str[4]
+    df['team_1'] = df['game_id'].str.split('_').str[2]
+    df['team_2'] = df['game_id'].str.split('_').str[3]
     df['opponent'] = df.apply(lambda row: row['team_1'] if row['posteam'] != row['team_1'] else row['team_2'], axis=1)
     df.drop(['team_1', 'team_2'], axis=1, inplace=True)
     return df
