@@ -31,9 +31,9 @@ def write_output(df: pd.DataFrame, run_id) -> None:
     df.to_parquet(output_file, index=False)
 
 
-if __name__ == '__main__':
+def main(run_id):
+    pd.options.mode.copy_on_write = True
     # TODO: make input to job
-    run_id = '20240809'
     roster_df = read_roster_data()
     active_roster_df = create_active_flag(roster_df)
     final_df = prep_final_dataset(active_roster_df)

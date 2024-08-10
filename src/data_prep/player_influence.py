@@ -51,8 +51,8 @@ def collect_teammates_as_list(group) -> pd.DataFrame:
     })
 
 
-if __name__ == '__main__':
-    run_id = '20240809'
+def main(run_id):
+    pd.options.mode.copy_on_write = True
     pbp_agg_df = read_pbp_agg(run_id)
     rosters_df = read_rosters(run_id)
     fantasy_points_df = calculate_pbp_fantasy_points(pbp_agg_df, STANDARD_HALF_PPR)

@@ -98,9 +98,8 @@ def write_output(df: pd.DataFrame, run_id: str) -> None:
     df.to_parquet(output_file, index=False)
 
 
-if __name__ == '__main__':
+def main(run_id):
     pd.options.mode.copy_on_write = True
-    run_id = '20240809'
     plays_df = read_play_by_play_data()
     plays_subset_df = subset_plays_columns(plays_df)
     fantasy_plays_df = filter_to_fantasy_plays(plays_subset_df)
