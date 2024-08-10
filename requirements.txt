@@ -1,6 +1,2 @@
-pandas
+polars
 jupyter
-numpy
-scikit-learn
-pyarrow
-duckdb

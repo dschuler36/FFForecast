@@ -1,29 +1,24 @@
 from datetime import datetime
 
 import pandas as pd
+import polars as pl
 import os
 from src.config import config
 
 
 def read_play_by_play_data() -> pd.DataFrame:
     input_path = config['local']['data_paths']['inputs']['play_by_play']
-    years_to_process = ['2020', '2021', '2022', '2023']
-    df = None
-    for year in years_to_process:
-        path = os.path.join(input_path, f'play_by_play_{year}.parquet')
-        tmp_df = pd.read_parquet(path)
-        df = pd.concat([df, tmp_df])
-    return df
+    return pl.read_parquet(os.path.join(input_path, '*.parquet'))
 
 
-def subset_plays_columns(df: pd.DataFrame) -> pd.DataFrame:
-    return df[['game_id', 'posteam', 'home_team', 'passer', 'passer_id', 'rusher', 'rusher_id', 'receiver',
-               'receiver_id', 'pass', 'rush', 'yards_gained', 'fumble', 'touchdown', 'pass_touchdown', 'rush_touchdown',
-               'rush_attempt', 'pass_attempt', 'yards_after_catch', 'interception']]
+def subset_plays_columns(df: pl.DataFrame) -> pl.DataFrame:
+    return df.select('game_id', 'posteam', 'home_team', 'passer', 'passer_id', 'rusher', 'rusher_id', 'receiver',
+                     'receiver_id', 'pass', 'rush', 'yards_gained', 'fumble', 'touchdown', 'pass_touchdown',
+                     'rush_touchdown', 'rush_attempt', 'pass_attempt', 'yards_after_catch', 'interception')
 
 
-def filter_to_fantasy_plays(df: pd.DataFrame) -> pd.DataFrame:
-    return df.dropna(subset=['passer', 'rusher', 'receiver'], how='all')
+def filter_to_fantasy_plays(df: pl.DataFrame) -> pl.DataFrame:
+    return df.drop_nulls(subset=['passer', 'rusher', 'receiver'])
 
 
 def reformat_plays_for_position(df: pd.DataFrame) -> pd.DataFrame:
@@ -71,8 +66,8 @@ def add_time_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def create_home_away_col(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.reset_index(drop=True)
+def create_home_away_col(df: pl.DataFrame) -> pl.DataFrame:
+    df.with_columns('home_away', pl.when(df['posteam'], ))
     df['home_away'] = df.apply(lambda row: 'home' if row['posteam'] == row['home_team'] else 'away', axis=1)
     df['team_1'] = df['game_id'].str.split('_').str[2]
     df['team_2'] = df['game_id'].str.split('_').str[3]
@@ -104,6 +99,7 @@ def main(run_id):
     plays_subset_df = subset_plays_columns(plays_df)
     fantasy_plays_df = filter_to_fantasy_plays(plays_subset_df)
     home_away_df = create_home_away_col(fantasy_plays_df)
+    print(fantasy_plays_df)
     reformatted_df = reformat_plays_for_position(home_away_df)
     agg_plays_df = agg_plays_to_game_and_player(reformatted_df)
     agg_with_week_df = add_time_columns(agg_plays_df)
