@@ -108,18 +108,12 @@ def write_output(df: pl.DataFrame, run_id: str) -> None:
 
 def main(run_id):
     plays_df = read_play_by_play_data()
-    print(len(plays_df))
     plays_subset_df = subset_plays_columns(plays_df)
-    print(len(plays_subset_df))
     fantasy_plays_df = filter_to_fantasy_plays(plays_subset_df)
-    print(len(fantasy_plays_df))
     home_away_df = create_home_away_col(fantasy_plays_df)
-    print(len(home_away_df))
     reformatted_df = reformat_plays_for_position(home_away_df)
-    print(len(reformatted_df))
     agg_plays_df = agg_plays_to_game_and_player(reformatted_df)
     agg_with_week_df = add_time_columns(agg_plays_df)
-
     players_df = read_players_data()
     agg_plays_with_team = get_player_curr_team(agg_with_week_df, players_df)
 
