@@ -1,7 +1,7 @@
 import os
 
-import pandas as pd
 import polars as pl
+
 from src.config import config
 from src.utils.points_calc import calculate_fantasy_points
 from src.utils.points_config import PointsConfig, STANDARD_HALF_PPR
@@ -19,11 +19,11 @@ def read_rosters(run_id: str) -> pl.DataFrame:
     return pl.read_parquet(os.path.join(rosters_path, rosters_filename))
 
 
-def calculate_pbp_fantasy_points(df: pd.DataFrame, pc: PointsConfig) -> pd.DataFrame:
+def calculate_pbp_fantasy_points(df: pl.DataFrame, pc: PointsConfig) -> pl.DataFrame:
     return df.with_columns(pl.struct('passing_yards', 'passing_touchdowns', 'interceptions', 'receptions',
                                      'receiving_yards', 'receiving_touchdowns', 'rushing_yards', 'rushing_touchdowns',
                                      'fumbles')
-                             .map_elements(lambda x: calculate_fantasy_points(STANDARD_HALF_PPR,
+                             .map_elements(lambda x: calculate_fantasy_points(pc,
                                                                               x['passing_yards'],
                                                                               x['passing_touchdowns'],
                                                                               x['interceptions'],
@@ -48,14 +48,6 @@ def create_roster_by_game(pbp_df: pl.DataFrame, roster_df: pl.DataFrame) -> pl.D
 
     return joined_df.group_by('game_id', 'player_id', 'teammate_id', 'position') \
                     .agg(pl.max('active').alias('active'))
-
-
-def collect_teammates_as_list(df):
-    active_teammates = df.filter(pl.col('active') == 1).get_column('teammate_id').to_list()
-    return pl.struct({
-        'active_teammates': active_teammates,
-        'num_active_teammates': len(active_teammates)
-    })
 
 
 def create_teammate_active_columns(df):

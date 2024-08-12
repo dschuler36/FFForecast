@@ -1,10 +1,11 @@
-import pandas as pd
-import polars as pl
 import os
+
+import polars as pl
+
 from src.config import config
 
 
-def read_roster_data() -> pd.DataFrame:
+def read_roster_data() -> pl.DataFrame:
     input_path = config['local']['data_paths']['inputs']['rosters']
     return pl.read_parquet(os.path.join(input_path, '*.parquet'))
 
