@@ -1,12 +1,11 @@
-from datetime import datetime
-
-import pandas as pd
-import polars as pl
 import os
+
+import polars as pl
+
 from src.config import config
 
 
-def read_play_by_play_data() -> pd.DataFrame:
+def read_play_by_play_data() -> pl.DataFrame:
     input_path = config['local']['data_paths']['inputs']['play_by_play']
     return pl.read_parquet(os.path.join(input_path, '*.parquet'))
 
