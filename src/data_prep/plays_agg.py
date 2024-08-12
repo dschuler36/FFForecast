@@ -68,23 +68,23 @@ def reformat_plays_for_position(df: pl.DataFrame) -> pl.DataFrame:
 
 def agg_plays_to_game_and_player(df: pl.DataFrame) -> pl.DataFrame:
     return df.group_by(['game_id', 'posteam', 'home_away', 'opponent', 'player', 'player_id']) \
-             .agg(passing_attempts=('passing_attempts', 'sum'),
-                  passing_yards=('passing_yards', 'sum'),
-                  passing_touchdowns=('passing_touchdowns', 'sum'),
-                  rushing_attempts=('rushing_attempts', 'sum'),
-                  rushing_yards=('rushing_yards', 'sum'),
-                  rushing_touchdowns=('rushing_touchdowns', 'sum'),
-                  receptions=('receptions', 'sum'),
-                  receiving_yards=('receiving_yards', 'sum'),
-                  receiving_touchdowns=('receiving_touchdowns', 'sum'),
-                  fumbles=('fumble', 'sum'),
-                  interceptions=('interception', 'sum'))
+             .agg(pl.sum('passing_attempts').alias('passing_attempts'),
+                  pl.sum('passing_touchdowns').alias('passing_touchdowns'),
+                  pl.sum('passing_yards').alias('passing_yards'),
+                  pl.sum('rushing_attempts').alias('rushing_attempts'),
+                  pl.sum('rushing_yards').alias('rushing_yards'),
+                  pl.sum('rushing_touchdowns').alias('rushing_touchdowns'),
+                  pl.sum('receptions').alias('receptions'),
+                  pl.sum('receiving_yards').alias('receiving_yards'),
+                  pl.sum('receiving_touchdowns').alias('receiving_touchdowns'),
+                  pl.sum('fumble').alias('fumbles'),
+                  pl.sum('interception').alias('interceptions'))
 
 
 def add_time_columns(df: pl.DataFrame) -> pl.DataFrame:
     return df.with_columns(
-        pl.col('game_id').str.split('_').list.get(0).cast(pl.Int64, strict=False).alias('season'),
-        pl.col('game_id').str.split('_').list.get(1).cast(pl.Int64, strict=False).alias('week')
+        pl.col('game_id').str.split('_').list.get(0).cast(pl.Int16, strict=False).alias('season'),
+        pl.col('game_id').str.split('_').list.get(1).cast(pl.Int8, strict=False).alias('week')
     )
 
 

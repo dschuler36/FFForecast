@@ -14,7 +14,8 @@ def create_active_flag(df: pl.DataFrame) -> pl.DataFrame:
 
 
 def prep_final_dataset(df: pl.DataFrame) -> pl.DataFrame:
-    return df.with_columns(df['week'].cast(int)) \
+    return df.with_columns(df['week'].cast(pl.Int8),
+                           df['season'].cast(pl.Int16)) \
              .rename(mapping={'gsis_id': 'player_id'}) \
              .select(['season', 'team', 'position', 'status', 'active', 'full_name', 'birth_date', 'height', 'weight',
                       'player_id', 'week', 'game_type', 'entry_year', 'draft_club', 'draft_number'])
