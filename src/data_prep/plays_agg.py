@@ -1,105 +1,111 @@
-from datetime import datetime
-
-import pandas as pd
 import os
+
+import polars as pl
+
 from src.config import config
 
 
-def read_play_by_play_data() -> pd.DataFrame:
+def read_play_by_play_data() -> pl.DataFrame:
     input_path = config['local']['data_paths']['inputs']['play_by_play']
-    years_to_process = ['2020', '2021', '2022', '2023']
-    df = None
-    for year in years_to_process:
-        path = os.path.join(input_path, f'play_by_play_{year}.parquet')
-        tmp_df = pd.read_parquet(path)
-        df = pd.concat([df, tmp_df])
+    return pl.read_parquet(os.path.join(input_path, '*.parquet'))
+
+
+def subset_plays_columns(df: pl.DataFrame) -> pl.DataFrame:
+    return df.select('game_id', 'posteam', 'home_team', 'passer', 'passer_id', 'rusher', 'rusher_id', 'receiver',
+                     'receiver_id', 'pass', 'rush', 'yards_gained', 'fumble', 'touchdown', 'pass_touchdown',
+                     'rush_touchdown', 'rush_attempt', 'pass_attempt', 'yards_after_catch', 'interception')
+
+
+def filter_to_fantasy_plays(df: pl.DataFrame) -> pl.DataFrame:
+    return df.filter(~(pl.col('passer').is_null() & pl.col('rusher').is_null() & pl.col('receiver').is_null()))
+
+
+def create_home_away_col(df: pl.DataFrame) -> pl.DataFrame:
+    df = df.with_columns(pl.when(df['posteam'] == df['home_team'])
+                           .then(pl.lit('home'))
+                           .otherwise(pl.lit('away'))
+                           .alias('home_away'),
+                         df['game_id'].str.split('_').list.get(2).alias('team_1'),
+                         df['game_id'].str.split('_').list.get(3).alias('team_2'))
+    df = df.with_columns(pl.when(df['posteam'] == df['team_1'])
+                           .then(df['team_1']).otherwise(df['team_2'])
+                           .alias('opponent'))
+    df.drop(['team_1', 'team_2'])
     return df
 
 
-def subset_plays_columns(df: pd.DataFrame) -> pd.DataFrame:
-    return df[['game_id', 'posteam', 'home_team', 'passer', 'passer_id', 'rusher', 'rusher_id', 'receiver',
-               'receiver_id', 'pass', 'rush', 'yards_gained', 'fumble', 'touchdown', 'pass_touchdown', 'rush_touchdown',
-               'rush_attempt', 'pass_attempt', 'yards_after_catch', 'interception']]
+def reformat_plays_for_position(df: pl.DataFrame) -> pl.DataFrame:
+    passers = df.select(['game_id', 'posteam', 'home_away', 'opponent', 'passer', 'passer_id',
+                         'yards_gained', 'pass_attempt', 'pass_touchdown', 'fumble', 'interception']) \
+                .rename({'passer': 'player',
+                         'passer_id': 'player_id',
+                         'yards_gained': 'passing_yards',
+                         'pass_attempt': 'passing_attempts',
+                         'pass_touchdown': 'passing_touchdowns'}) \
+                .filter(pl.col('player_id').is_not_null())
+
+    rushers = df.select(['game_id', 'posteam', 'home_away', 'opponent', 'rusher', 'rusher_id',
+                         'yards_gained', 'rush_attempt', 'rush_touchdown', 'fumble']) \
+                .rename({'rusher': 'player',
+                         'rusher_id': 'player_id',
+                         'yards_gained': 'rushing_yards',
+                         'rush_attempt': 'rushing_attempts',
+                         'rush_touchdown': 'rushing_touchdowns'}) \
+                .filter(pl.col('player_id').is_not_null())
+
+    receivers = df.select(['game_id', 'posteam', 'home_away', 'opponent', 'receiver', 'receiver_id',
+                           'yards_gained', 'touchdown', 'fumble']) \
+                  .rename({'receiver': 'player',
+                           'receiver_id': 'player_id',
+                           'yards_gained': 'receiving_yards',
+                           'touchdown': 'receiving_touchdowns'}) \
+                  .with_columns(pl.lit(1).alias('receptions')) \
+                  .filter(pl.col('player_id').is_not_null())
+
+    return pl.concat([passers, rushers, receivers], how='diagonal')
 
 
-def filter_to_fantasy_plays(df: pd.DataFrame) -> pd.DataFrame:
-    return df.dropna(subset=['passer', 'rusher', 'receiver'], how='all')
+def agg_plays_to_game_and_player(df: pl.DataFrame) -> pl.DataFrame:
+    return df.group_by(['game_id', 'posteam', 'home_away', 'opponent', 'player', 'player_id']) \
+             .agg(pl.sum('passing_attempts').alias('passing_attempts'),
+                  pl.sum('passing_touchdowns').alias('passing_touchdowns'),
+                  pl.sum('passing_yards').alias('passing_yards'),
+                  pl.sum('rushing_attempts').alias('rushing_attempts'),
+                  pl.sum('rushing_yards').alias('rushing_yards'),
+                  pl.sum('rushing_touchdowns').alias('rushing_touchdowns'),
+                  pl.sum('receptions').alias('receptions'),
+                  pl.sum('receiving_yards').alias('receiving_yards'),
+                  pl.sum('receiving_touchdowns').alias('receiving_touchdowns'),
+                  pl.sum('fumble').alias('fumbles'),
+                  pl.sum('interception').alias('interceptions'))
 
 
-def reformat_plays_for_position(df: pd.DataFrame) -> pd.DataFrame:
-    passers = df[['game_id', 'posteam', 'home_away', 'opponent', 'passer', 'passer_id', 'yards_gained', 'pass_attempt',
-                  'pass_touchdown', 'fumble', 'interception']].copy()
-    passers.rename(columns={'passer': 'player', 'passer_id': 'player_id', 'yards_gained': 'passing_yards',
-                            'pass_attempt': 'passing_attempts', 'pass_touchdown': 'passing_touchdowns'}, inplace=True)
-    passers = passers.loc[passers['player_id'].notnull()]
-
-    rushers = df[['game_id', 'posteam', 'home_away', 'opponent', 'rusher', 'rusher_id', 'yards_gained', 'rush_attempt',
-                  'rush_touchdown', 'fumble']].copy()
-    rushers.rename(columns={'rusher': 'player', 'rusher_id': 'player_id', 'yards_gained': 'rushing_yards',
-                            'rush_attempt': 'rushing_attempts', 'rush_touchdown': 'rushing_touchdowns'}, inplace=True)
-    rushers = rushers.loc[rushers['player_id'].notnull()]
-
-    receivers = df[['game_id', 'posteam', 'home_away', 'opponent', 'receiver', 'receiver_id', 'yards_gained',
-                    'touchdown', 'fumble']].copy()
-    receivers.rename(columns={'receiver': 'player', 'receiver_id': 'player_id', 'yards_gained': 'receiving_yards',
-                              'touchdown': 'receiving_touchdowns'}, inplace=True)
-    receivers['receptions'] = 1
-    receivers = receivers.loc[receivers['player_id'].notnull()]
-
-    return pd.concat([passers, rushers, receivers], ignore_index=True)
+def add_time_columns(df: pl.DataFrame) -> pl.DataFrame:
+    return df.with_columns(
+        pl.col('game_id').str.split('_').list.get(0).cast(pl.Int16, strict=False).alias('season'),
+        pl.col('game_id').str.split('_').list.get(1).cast(pl.Int8, strict=False).alias('week')
+    )
 
 
-def agg_plays_to_game_and_player(df: pd.DataFrame) -> pd.DataFrame:
-    return df.groupby(['game_id', 'posteam', 'home_away', 'opponent', 'player', 'player_id']).agg(
-                        passing_attempts=('passing_attempts', 'sum'),
-                        passing_yards=('passing_yards', 'sum'),
-                        passing_touchdowns=('passing_touchdowns', 'sum'),
-                        rushing_attempts=('rushing_attempts', 'sum'),
-                        rushing_yards=('rushing_yards', 'sum'),
-                        rushing_touchdowns=('rushing_touchdowns', 'sum'),
-                        receptions=('receptions', 'sum'),
-                        receiving_yards=('receiving_yards', 'sum'),
-                        receiving_touchdowns=('receiving_touchdowns', 'sum'),
-                        fumbles=('fumble', 'sum'),
-                        interceptions=('interception', 'sum')
-                       ).reset_index()
-
-
-def add_time_columns(df: pd.DataFrame) -> pd.DataFrame:
-    df['season'] = df['game_id'].str.split('_').str[0].astype('int')
-    df['week'] = df['game_id'].str.split('_').str[1].astype('int')
-    return df
-
-
-def create_home_away_col(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.reset_index(drop=True)
-    df['home_away'] = df.apply(lambda row: 'home' if row['posteam'] == row['home_team'] else 'away', axis=1)
-    df['team_1'] = df['game_id'].str.split('_').str[2]
-    df['team_2'] = df['game_id'].str.split('_').str[3]
-    df['opponent'] = df.apply(lambda row: row['team_1'] if row['posteam'] != row['team_1'] else row['team_2'], axis=1)
-    df.drop(['team_1', 'team_2'], axis=1, inplace=True)
-    return df
-
-
-def read_players_data() -> pd.DataFrame:
+def read_players_data() -> pl.DataFrame:
     input_path = config['local']['data_paths']['inputs']['players']
-    return pd.read_parquet(os.path.join(input_path, 'players.parquet'))
+    return pl.read_parquet(os.path.join(input_path, 'players.parquet'))
 
 
-def get_player_curr_team(plays: pd.DataFrame, players: pd.DataFrame) -> pd.DataFrame:
-    players = players.rename(columns={'gsis_id': 'player_id'})
-    return pd.merge(plays, players[['player_id', 'position', 'team_abbr']], on='player_id', how='left') \
-             .rename(columns={'team_abbr': 'curr_team', 'posteam': 'team'})
+def get_player_curr_team(plays: pl.DataFrame, players: pl.DataFrame) -> pl.DataFrame:
+    players = players.rename(mapping={'gsis_id': 'player_id'}) \
+                     .select('player_id', 'position', 'team_abbr')
+    return plays.join(players, on='player_id', how='left') \
+                .rename(mapping={'team_abbr': 'curr_team', 'posteam': 'team'})
 
 
-def write_output(df: pd.DataFrame, run_id: str) -> None:
+def write_output(df: pl.DataFrame, run_id: str) -> None:
     output_filename = f'play_by_play_agg_{run_id}.parquet'
     output_file = os.path.join(config['local']['data_paths']['outputs']['play_by_play_agg'], output_filename)
-    df.to_parquet(output_file, index=False)
+    df.write_parquet(output_file)
 
 
 def main(run_id):
-    pd.options.mode.copy_on_write = True
     plays_df = read_play_by_play_data()
     plays_subset_df = subset_plays_columns(plays_df)
     fantasy_plays_df = filter_to_fantasy_plays(plays_subset_df)
@@ -107,7 +113,6 @@ def main(run_id):
     reformatted_df = reformat_plays_for_position(home_away_df)
     agg_plays_df = agg_plays_to_game_and_player(reformatted_df)
     agg_with_week_df = add_time_columns(agg_plays_df)
-
     players_df = read_players_data()
     agg_plays_with_team = get_player_curr_team(agg_with_week_df, players_df)
 
