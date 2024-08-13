@@ -1,64 +1,94 @@
 import os
 
-import pandas as pd
+import polars as pl
+
 from src.config import config
 from src.utils.points_calc import calculate_fantasy_points
 from src.utils.points_config import PointsConfig, STANDARD_HALF_PPR
 
 
-def read_pbp_agg(run_id: str) -> pd.DataFrame:
+def read_pbp_agg(run_id: str) -> pl.DataFrame:
     pbp_agg_path = config['local']['data_paths']['outputs']['play_by_play_agg']
     pbp_filename = f'play_by_play_agg_{run_id}.parquet'
-    return pd.read_parquet(os.path.join(pbp_agg_path, pbp_filename))
+    return pl.read_parquet(os.path.join(pbp_agg_path, pbp_filename))
 
 
-def read_rosters(run_id: str) -> pd.DataFrame:
+def read_rosters(run_id: str) -> pl.DataFrame:
     rosters_path = config['local']['data_paths']['outputs']['rosters']
     rosters_filename = f'rosters_{run_id}.parquet'
-    return pd.read_parquet(os.path.join(rosters_path, rosters_filename))
+    return pl.read_parquet(os.path.join(rosters_path, rosters_filename))
 
 
-def calculate_pbp_fantasy_points(df: pd.DataFrame, pc: PointsConfig) -> pd.DataFrame:
-    df['fantasy_points'] = df.apply(lambda x: calculate_fantasy_points(pc, x.passing_yards, x.passing_touchdowns,
-                                                                       x.interceptions, x.receptions, x.receiving_yards,
-                                                                       x.receiving_touchdowns, x.rushing_yards,
-                                                                       x.rushing_touchdowns, x.fumbles), axis=1)
-    return df
+def calculate_pbp_fantasy_points(df: pl.DataFrame, pc: PointsConfig) -> pl.DataFrame:
+    return df.with_columns(pl.struct('passing_yards', 'passing_touchdowns', 'interceptions', 'receptions',
+                                     'receiving_yards', 'receiving_touchdowns', 'rushing_yards', 'rushing_touchdowns',
+                                     'fumbles')
+                             .map_elements(lambda x: calculate_fantasy_points(pc,
+                                                                              x['passing_yards'],
+                                                                              x['passing_touchdowns'],
+                                                                              x['interceptions'],
+                                                                              x['receptions'],
+                                                                              x['receiving_yards'],
+                                                                              x['receiving_touchdowns'],
+                                                                              x['rushing_yards'],
+                                                                              x['rushing_touchdowns'],
+                                                                              x['fumbles']),
+                                           return_dtype=pl.Float64).alias('fantasy_points'))
 
 
-def filter_rosters_to_specific_positions(df: pd.DataFrame) -> pd.DataFrame:
+def filter_rosters_to_specific_positions(df: pl.DataFrame) -> pl.DataFrame:
     relevant_positions = ['QB', 'WR', 'RB', 'OL', 'TE']
-    return df[df['position'].isin(relevant_positions)]
+    return df.filter(df['position'].is_in(relevant_positions))
 
 
-def create_roster_by_game(pbp_df: pd.DataFrame, roster_df: pd.DataFrame) -> pd.DataFrame:
-    merged_df = pbp_df.merge(
-        roster_df[['team', 'week', 'season', 'position', 'full_name', 'player_id', 'active']],
-        left_on=['team', 'week', 'season'],
-        right_on=['team', 'week', 'season'],
-        suffixes=('', '_teammate')
-    ).rename(columns={'player_id_teammate': 'teammate_id'})
+def create_roster_by_game(pbp_df: pl.DataFrame, roster_df: pl.DataFrame) -> pl.DataFrame:
+    joined_df = pbp_df.join(roster_df.select('team', 'week', 'season', 'position', 'full_name', 'player_id', 'active'),
+                            on=['team', 'week', 'season']) \
+                      .rename(mapping={'player_id_right': 'teammate_id'})
 
-    return merged_df.groupby(['game_id', 'player_id', 'teammate_id', 'position'])[
-        'active'].max().reset_index()
+    return joined_df.group_by('game_id', 'player_id', 'teammate_id', 'position') \
+                    .agg(pl.max('active').alias('active'))
 
 
-def collect_teammates_as_list(group) -> pd.DataFrame:
-    active_teammates = group[group['active'] == 1]['teammate_id'].tolist()
-    return pd.Series({
-        'active_teammates': active_teammates,
-        'num_active_teammates': len(active_teammates)
-    })
+def create_teammate_active_columns(df):
+    reshaped_teammate_presence = df.pivot(
+        values="active",
+        index=["game_id", "player_id"],
+        columns="teammate_id",
+        aggregate_function="first"
+    )
+
+    # Rename columns to add 'teammate_' prefix
+    new_column_names = {
+        col: f"teammate_{col}"
+        for col in reshaped_teammate_presence.columns
+        if col not in ["game_id", "player_id"]
+    }
+    reshaped_teammate_presence = reshaped_teammate_presence.rename(new_column_names)
+
+    # Fill null values with 0
+    reshaped_teammate_presence = reshaped_teammate_presence.fill_null(0)
+
+    # Convert float values to int for teammate columns
+    for col in reshaped_teammate_presence.columns:
+        if col.startswith('teammate_'):
+            reshaped_teammate_presence = reshaped_teammate_presence.with_columns(
+                pl.col(col).cast(pl.Int32)
+            )
+
+    return reshaped_teammate_presence
+
+
+def join_fantasy_points_and_teammates(fp_df: pl.DataFrame, teammates_df: pl.DataFrame) -> pl.DataFrame:
+    return fp_df.join(teammates_df, on=['player_id'], how='left')
 
 
 def main(run_id):
-    pd.options.mode.copy_on_write = True
     pbp_agg_df = read_pbp_agg(run_id)
     rosters_df = read_rosters(run_id)
     fantasy_points_df = calculate_pbp_fantasy_points(pbp_agg_df, STANDARD_HALF_PPR)
     filtered_rosters_df = filter_rosters_to_specific_positions(rosters_df)
     roster_by_game_df = create_roster_by_game(pbp_agg_df, filtered_rosters_df)
-    reshaped_teammate_presence = roster_by_game_df.groupby(['game_id', 'player_id']).apply(
-        collect_teammates_as_list).reset_index()
-
-    print(reshaped_teammate_presence)
+    df_with_teammate_active_flag = create_teammate_active_columns(roster_by_game_df)
+    joined_df = join_fantasy_points_and_teammates(fantasy_points_df, df_with_teammate_active_flag)
+    fantasy_points_df.write_parquet(f'./data/outputs/player_influence/fantasy_points_{run_id}.parquet')
