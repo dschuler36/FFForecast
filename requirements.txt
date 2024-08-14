@@ -4,3 +4,4 @@ ruff
 nfl-data-py
 sqlalchemy
 psycopg2-binary
+connectorx

@@ -66,13 +66,9 @@ def train_model(df):
     return model
 
 
-def main(season, week):
+def main(season: int, week: int):
     df = read_weekly_stats()
     model = train_model(df)
     model_filename = f'ff_pred_{season}_{week}.pkl'
     with open(model_filename, 'wb') as f:
         pickle.dump(model, f)
-
-
-if __name__ == '__main__':
-    main(2024, 0)
