@@ -1,8 +1,7 @@
-from nis import match
-from typing import List
-
-import polars as pl
 import nfl_data_py as nfl
+import polars as pl
+
+from utils.settings import settings
 
 
 def pull_weekly_roster(season: int, week: int) -> pl.DataFrame:
@@ -44,7 +43,7 @@ def select_output_cols(df: pl.DataFrame) -> pl.DataFrame:
 def insert_to_db(df: pl.DataFrame) -> None:
     df.write_database(
         table_name='weekly_roster',
-        connection='postgresql://ff:ff@0.0.0.0:5432/ff',
+        connection=settings.POSTGRES_CONN_STRING,
         if_table_exists='replace'
     )
 
@@ -55,7 +54,3 @@ def main(season: int, week: int):
     roster_with_opponent_df = join_roster_with_schedule(active_players_df, opponent_df)
     output_df = select_output_cols(roster_with_opponent_df)
     insert_to_db(output_df)
-
-
-if __name__ == '__main__':
-    main(2023, 1)

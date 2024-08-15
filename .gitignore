@@ -2,3 +2,5 @@
 data/*
 *.pkl
 db-data
+.env
+.env.local

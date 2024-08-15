@@ -1,0 +1,21 @@
+CREATE TABLE weekly_predictions_base (
+    player_id VARCHAR(255),
+    passing_yards FLOAT8,
+    passing_tds FLOAT8,
+    interceptions FLOAT8,
+    fumbles FLOAT8,
+    rushing_yards FLOAT8,
+    rushing_tds FLOAT8,
+    rushing_2pt_conversions FLOAT8,
+    receptions FLOAT8,
+    receiving_yards FLOAT8,
+    receiving_tds FLOAT8,
+    receiving_2pt_conversions FLOAT8,
+    passing_2pt_conversions FLOAT8,
+    season INT,
+    week INT,
+    player_name VARCHAR(255),
+    team VARCHAR(255),
+    opponent VARCHAR(255),
+    PRIMARY KEY (season, week, player_id)
+);
