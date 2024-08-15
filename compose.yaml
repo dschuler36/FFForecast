@@ -1,0 +1,41 @@
+services:
+  database:
+    image: postgres:13
+    environment:
+      POSTGRES_PASSWORD: ff
+      POSTGRES_USER: postgres
+      POSTGRES_DB: ff
+    volumes:
+      - ./db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mlflow:
+    image: mlflow
+    build:
+      dockerfile: ./mlflow/Dockerfile
+    ports:
+      - "5001:5001"
+
+#  leagued-service:
+#    build:
+#      context: .
+#      tags:
+#        - leagued-service
+#    ports:
+#      - "8000:8000"
+#    volumes:
+#      - ./alembic:/leagued-service/alembic
+#    env_file:
+#      - path: .env
+#        required: true
+#      - path: .env.local
+#        required: false
+#    depends_on:
+#      database:
+#        condition: service_healthy
