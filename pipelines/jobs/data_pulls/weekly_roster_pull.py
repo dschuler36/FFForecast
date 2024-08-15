@@ -1,7 +1,7 @@
 import nfl_data_py as nfl
 import polars as pl
 
-from utils.settings import settings
+from shared.settings import settings
 
 
 def pull_weekly_roster(season: int, week: int) -> pl.DataFrame:

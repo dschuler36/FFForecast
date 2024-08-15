@@ -3,7 +3,7 @@ from typing import List
 import polars as pl
 import nfl_data_py as nfl
 
-from utils.settings import settings
+from shared.settings import settings
 
 
 def pull_nfl_data(seasons: List[int], week: int = None) -> pl.DataFrame:

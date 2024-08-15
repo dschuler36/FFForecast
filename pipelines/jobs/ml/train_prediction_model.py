@@ -5,7 +5,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import OneHotEncoder
 
-from utils.settings import settings
+from shared.settings import settings
 
 
 def read_weekly_stats() -> pd.DataFrame:

@@ -1,4 +1,4 @@
-from utils.points_config import PointsConfig
+from shared.points_config import PointsConfig
 
 
 def calculate_fantasy_points(pc: PointsConfig, qb_yd, qb_td, int, rec, rec_yd, rec_td, rush_yd, rush_td, fumble,
