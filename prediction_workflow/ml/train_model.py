@@ -1,7 +1,18 @@
 import pandas as pd
 import pickle
+
+from scipy import sparse
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import OneHotEncoder
+import pandas as pd
+import numpy as np
+from scipy import sparse
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+from sklearn.compose import ColumnTransformer
+
 
 def read_weekly_stats() -> pd.DataFrame:
     return pd.read_sql(
@@ -12,45 +23,37 @@ def read_weekly_stats() -> pd.DataFrame:
 
 
 def train_model(df: pd.DataFrame):
-    # Drop columns with all NaN values
-    df = df.dropna(axis=1, how='all')
-
-    # Alternatively, drop columns with all zeros (if zeros are problematic)
-    df = df.loc[:, (df != 0).any(axis=0)]
-
-    # Drop columns with only one unique value (no variance)
-    df = df.loc[:, df.nunique() > 1]
-
-    # Filter data for training and testing
-    train_data = df[df['season'].isin([2020, 2021, 2022])]
-    test_data = df[df['season'] == 2023]
-
     # todo: add home_away column
-    categorical_features = ['player_id', 'team','opponent']
-    # numerical_features = ['completions', 'attempts',  'sacks',
-    #     'sack_yards', 'passing_air_yards', 'passing_yards_after_catch', 'passing_first_downs', 'passing_epa',
-    #     'passing_2pt_conversions', 'pacr', 'dakota', 'carries',  'rushing_first_downs',
-    #     'rushing_epa', 'targets',  'receiving_air_yards', 'receiving_yards_after_catch', 'receiving_epa',
-    #      'racr', 'target_share', 'air_yards_share', 'wopr', 'special_teams_tds']
+    cat_features_to_encode = ['player_id', 'team', 'opponent']
     target_variables = ['passing_yards', 'passing_tds', 'interceptions', 'fumbles', 'rushing_yards', 'rushing_tds',
                         'rushing_2pt_conversions', 'receptions', 'receiving_yards', 'receiving_tds',
                         'receiving_2pt_conversions']
 
-    # Split into input features and target variables
-    X_train = train_data[categorical_features]
-    print(X_train)
+    # Filter data for training and testing
+    df = df[cat_features_to_encode + target_variables + ['season']]
+    train_data = df[df['season'].isin([2020, 2021, 2022])]
+    test_data = df[df['season'] == 2023]
+
+
+    # TODO: make this preprocessor into a shared location to be reused at prediction time
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('cat_features', OneHotEncoder(sparse_output=True, handle_unknown='ignore'), cat_features_to_encode)
+        ],
+        remainder='passthrough'
+    )
+
+    # Fit the preprocessor on the training data
+    X_train = train_data.drop(columns=target_variables)
+    X_train_encoded = preprocessor.fit_transform(X_train)
+
+    # Transform the test data
+    X_test = test_data.drop(columns=target_variables)
+    X_test_encoded = preprocessor.transform(X_test)
+
+    # Prepare target variables
     y_train = train_data[target_variables]
-
-    X_test = test_data[categorical_features ]
     y_test = test_data[target_variables]
-
-    # One-hot encode categorical features
-    X_train_encoded = pd.get_dummies(X_train, columns=categorical_features)
-    print(X_train_encoded)
-    X_test_encoded = pd.get_dummies(X_test, columns=categorical_features)
-
-    # Ensure both train and test sets have the same feature columns
-    X_train_encoded, X_test_encoded = X_train_encoded.align(X_test_encoded, join='left', axis=1, fill_value=0)
 
     # Initialize and train the model
     model = RandomForestRegressor(n_estimators=100, random_state=42)
@@ -64,7 +67,19 @@ def train_model(df: pd.DataFrame):
 
     print(f"Mean Squared Error on 2023 data: {mse}")
     print(f"Mean Absolute Error on 2023 data: {mae}")
-    return model
+
+    return model, preprocessor
+
+# Function to get feature names (useful for interpretation)
+def get_feature_names(column_transformer):
+    feature_names = []
+    for name, transformer, column in column_transformer.transformers_:
+        if name != 'remainder':
+            if hasattr(transformer, 'get_feature_names_out'):
+                feature_names.extend(transformer.get_feature_names_out(column))
+            else:
+                feature_names.extend(column)
+    return feature_names
 
 
 def main(season: int, week: int):
@@ -73,3 +88,7 @@ def main(season: int, week: int):
     model_filename = f'ff_pred_{season}_{week}.pkl'
     with open(model_filename, 'wb') as f:
         pickle.dump(model, f)
+
+
+if __name__ == '__main__':
+    main(2023, 1)
