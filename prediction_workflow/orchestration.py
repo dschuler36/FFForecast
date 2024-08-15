@@ -1,5 +1,5 @@
-from src.prediction_workflow.ml import train_model
-from src.prediction_workflow.data_pulls import weekly_roster_pull
+from prediction_workflow.ml import train_model
+from prediction_workflow.data_pulls import weekly_roster_pull
 
 if __name__ == '__main__':
     season = 2023

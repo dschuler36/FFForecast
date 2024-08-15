@@ -15,6 +15,13 @@ services:
       timeout: 5s
       retries: 5
 
+  mlflow:
+    image: mlflow
+    build:
+      dockerfile: ./mlflow/Dockerfile
+    ports:
+      - "5001:5001"
+
 #  leagued-service:
 #    build:
 #      context: .

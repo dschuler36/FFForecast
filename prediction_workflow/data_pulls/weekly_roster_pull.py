@@ -19,19 +19,22 @@ def pull_opponent(season: int, week: int) -> pl.DataFrame:
 
 
 def filter_to_active_players(df: pl.DataFrame) -> pl.DataFrame:
-    return df.filter(pl.col('status') == 'ACT')
+    positions = ['FB', 'TE', 'QB', 'WR', 'RB']
+    return df.filter(pl.col('status') == 'ACT') \
+             .filter(pl.col('position').is_in(positions))
 
 
 def join_roster_with_schedule(roster_df: pl.DataFrame, opponents_df: pl.DataFrame) -> pl.DataFrame:
-    matchups_df = opponents_df.select('home_team', 'away_team')
+    matchups_df = opponents_df.select(['home_team', 'away_team'])
+    matchups2_df = matchups_df.rename({'home_team': 'home_team_2', 'away_team': 'away_team_2'})
+
     return roster_df.join(matchups_df, left_on='team', right_on='home_team', how='left') \
-                    .rename(mapping={'home_team': 'home_team_tmp', 'away_team': 'away_team_tmp'}) \
-                    .join(matchups_df, left_on='team', right_on='away_team', how='left') \
-                    .with_columns(pl.when(pl.col('home_team_tmp').is_not_null())
-                                    .then(pl.col('away_team_tmp'))
-                                    .otherwise(pl.col('home_team'))
+                    .join(matchups2_df, left_on='team', right_on='away_team_2', how='left') \
+                    .with_columns(pl.when(pl.col('away_team').is_null())
+                                    .then(pl.col('home_team_2'))
+                                    .otherwise(pl.col('away_team'))
                                     .alias('opponent')) \
-                    .drop('home_team', 'away_team', 'home_team_tmp', 'away_team_tmp')
+                    .drop('away_team', 'home_team_2')
 
 
 def select_output_cols(df: pl.DataFrame) -> pl.DataFrame:

@@ -6,5 +6,6 @@ CREATE TABLE weekly_roster (
     player_id VARCHAR NOT NULL,
     player_name VARCHAR NOT NULL,
     team VARCHAR NOT NULL,
+    opponent VARCHAR NOT NULL,
     PRIMARY KEY (season, week, player_id)
 );

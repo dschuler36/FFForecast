@@ -29,8 +29,9 @@ def combine_fumble_columns(df: pl.DataFrame) -> pl.DataFrame:
 
 def select_output_cols(df: pl.DataFrame) -> pl.DataFrame:
     return df.select(
-        'player_id', 'player_display_name', 'position', 'headshot_url', 'recent_team', 'season', 'week',
-        'opponent_team', 'completions', 'attempts', 'passing_yards', 'passing_tds', 'interceptions', 'fumbles', 'sacks',
+        'player_id', 'player_display_name', 'position', 'headshot_url', pl.col('recent_team').alias('team'), 'season', 'week',
+        pl.col('opponent_team').alias('opponent'), 'completions', 'attempts', 'passing_yards', 'passing_tds',
+        'interceptions', 'fumbles', 'sacks',
         'sack_yards', 'passing_air_yards', 'passing_yards_after_catch', 'passing_first_downs', 'passing_epa',
         'passing_2pt_conversions', 'pacr', 'dakota', 'carries', 'rushing_yards', 'rushing_tds', 'rushing_first_downs',
         'rushing_epa', 'rushing_2pt_conversions', 'receptions', 'targets', 'receiving_yards', 'receiving_tds',
