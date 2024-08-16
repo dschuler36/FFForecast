@@ -1,4 +1,17 @@
 services:
+  pipelines:
+    build:
+      context: .
+      dockerfile: pipelines/Dockerfile
+    env_file:
+      - .env.local
+    environment:
+      - ENV_FILE=/app/.env.local
+    volumes:
+      - ./pipelines:/app/pipelines
+      - ./shared/:/app/shared
+      - ./.env.local:/app/.env.local
+
   database:
     image: postgres:13
     environment:
@@ -18,7 +31,7 @@ services:
   mlflow:
     image: mlflow
     build:
-      dockerfile: ./pipelines/mlflow/Dockerfile
+      dockerfile: ./mlflow/Dockerfile
     ports:
       - "5001:5001"
 
