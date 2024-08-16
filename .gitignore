@@ -4,3 +4,5 @@ data/*
 db-data
 .env
 .env.local
+__pycache__/
+venv/

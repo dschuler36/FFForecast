@@ -1,9 +1,0 @@
-polars
-jupyter
-ruff
-nfl-data-py
-sqlalchemy
-psycopg2-binary
-connectorx
-scikit-learn
-pydantic-settings

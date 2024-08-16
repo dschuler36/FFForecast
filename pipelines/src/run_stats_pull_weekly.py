@@ -1,4 +1,4 @@
-from pipelines.jobs.data_pulls import weekly_stats_pull
+from jobs.data_pulls import weekly_stats_pull
 import argparse
 
 def parse_args():

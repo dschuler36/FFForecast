@@ -1,7 +1,7 @@
 import argparse
 
-from pipelines.jobs.data_pulls import weekly_roster_pull
-from pipelines.jobs.ml import train_prediction_model, batch_prediction, create_fantasy_points_default_configs
+from jobs.data_pulls import weekly_roster_pull
+from jobs.ml import train_prediction_model, batch_prediction, create_fantasy_points_default_configs
 
 
 def parse_args():

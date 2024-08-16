@@ -1,6 +1,7 @@
 import argparse
 
-from pipelines.jobs.data_pulls import weekly_stats_pull
+from jobs.data_pulls import weekly_stats_pull
+
 
 def parse_args():
     parser = argparse.ArgumentParser()

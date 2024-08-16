@@ -15,12 +15,31 @@ services:
       timeout: 5s
       retries: 5
 
-  mlflow:
-    image: mlflow
+  pipelines:
     build:
-      dockerfile: ./pipelines/mlflow/Dockerfile
-    ports:
-      - "5001:5001"
+      context: .
+      dockerfile: pipelines/Dockerfile
+    env_file:
+      - .env.local
+    environment:
+      - ENV_FILE=/app/.env.local
+      - PIPELINE_TO_RUN=run_ml_pipeline.py
+      - SEASON=2023
+      - WEEK=1
+    volumes:
+      - ./pipelines:/app/pipelines
+      - ./shared/:/app/shared
+      - ./.env.local:/app/.env.local
+    depends_on:
+      database:
+        condition: service_healthy
+
+#  mlflow:
+#    image: mlflow
+#    build:
+#      dockerfile: ./mlflow/Dockerfile
+#    ports:
+#      - "5001:5001"
 
 #  leagued-service:
 #    build:

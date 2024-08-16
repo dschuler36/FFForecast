@@ -1,15 +1,17 @@
 import polars as pl
-
+import pandas as pd
 from shared.points_calc import calculate_fantasy_points
 from shared.points_config import PointsConfig, STANDARD_PPR, STANDARD_HALF_PPR
 from shared.settings import settings
 
 
 def read_weekly_predictions_base(season: int, week: int) -> pl.DataFrame:
-    return pl.read_database_uri(
-        query=f"select * from weekly_predictions_base where season = {season} and week = {week}",
-        uri=settings.POSTGRES_CONN_STRING
+    # Would use pl.read_database_uri but that depends on connectorx which can't run in docker right now
+    df = pd.read_sql(
+        sql=f"select * from weekly_predictions_base where season = {season} and week = {week}",
+        con=settings.POSTGRES_CONN_STRING
     )
+    return pl.from_pandas(df)
 
 
 

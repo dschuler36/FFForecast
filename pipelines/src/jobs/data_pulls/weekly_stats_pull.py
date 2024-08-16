@@ -56,7 +56,3 @@ def main(seasons: List[int], week: int = None):
     combined_fumble_df = combine_fumble_columns(fantasy_df)
     final_df = select_output_cols(combined_fumble_df)
     insert_to_db(final_df)
-
-
-if __name__ == '__main__':
-    main([2020, 2021, 2022, 2023])
