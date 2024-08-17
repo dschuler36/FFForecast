@@ -41,7 +41,7 @@ def format_predictions(y_pred, X_test, target_variables):
 def create_final_predictions_df(pred_df: pd.DataFrame, roster_df: pd.DataFrame, season: int, week: int) -> pd.DataFrame:
     pred_df['season'] = season
     pred_df['week'] = week
-    joined = pred_df.merge(roster_df[['player_id', 'player_name', 'team', 'opponent']], on='player_id')
+    joined = pred_df.merge(roster_df[['player_id', 'player_name', 'team', 'opponent', 'position']], on='player_id')
     return joined
 
 
@@ -56,7 +56,7 @@ def insert_to_db(df: pd.DataFrame) -> None:
 
 def main(season: int, week: int):
     df = read_weekly_roster(season, week)
-    input_cols = ['player_id', 'team', 'opponent']
+    input_cols = ['player_id', 'team', 'opponent', 'position']
     target_variables = ['passing_yards', 'passing_tds', 'interceptions', 'fumbles', 'rushing_yards', 'rushing_tds',
                         'rushing_2pt_conversions', 'receptions', 'receiving_yards', 'receiving_tds',
                         'receiving_2pt_conversions', 'passing_2pt_conversions']
