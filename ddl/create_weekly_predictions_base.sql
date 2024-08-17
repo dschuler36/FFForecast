@@ -15,7 +15,8 @@ CREATE TABLE weekly_predictions_base (
     season INT,
     week INT,
     player_name VARCHAR(255),
-    team VARCHAR(255),
-    opponent VARCHAR(255),
+    team VARCHAR(3),
+    opponent VARCHAR(3),
+    position VARCHAR(3),
     PRIMARY KEY (season, week, player_id)
 );

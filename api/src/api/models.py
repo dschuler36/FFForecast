@@ -26,6 +26,7 @@ class WeeklyPredictionBase(Base):
     opponent = Column(String)
     player_name = Column(String)
     team = Column(String)
+    position = Column(String)
 
 
 class WeeklyPredictionStdHalfPPR(Base):

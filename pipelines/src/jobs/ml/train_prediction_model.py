@@ -33,7 +33,7 @@ def train_model(df: pd.DataFrame):
     train_data = df[df['season'].isin([2020, 2021, 2022])]
     test_data = df[df['season'] == 2023]
 
-    cat_features_to_encode = ['player_id', 'team', 'opponent']
+    cat_features_to_encode = ['player_id', 'team', 'opponent', 'position']
     target_variables = ['passing_yards', 'passing_tds', 'interceptions', 'fumbles', 'rushing_yards', 'rushing_tds',
                         'rushing_2pt_conversions', 'receptions', 'receiving_yards', 'receiving_tds',
                         'receiving_2pt_conversions', 'passing_2pt_conversions']
