@@ -48,9 +48,8 @@ services:
         - numbersff-api
     ports:
       - "8000:8000"
-    env_file:
-      - path: ./api/.env.local
-        required: false
+    environment:
+      - POSTGRES_CONN_STRING=postgresql+asyncpg://postgres:ff@database:5432/ff
     depends_on:
       database:
         condition: service_healthy

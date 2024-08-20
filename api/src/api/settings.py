@@ -11,7 +11,6 @@ else:
 
 
 class Settings(BaseSettings):
-    ENV: str
     POSTGRES_CONN_STRING: str
 
     class Config:
@@ -20,4 +19,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-print(settings)
