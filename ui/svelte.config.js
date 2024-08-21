@@ -10,8 +10,10 @@ const config = {
 	kit: {
 		adapter: adapter({
 		  out: '.svelte-kit/output/server',
-		  target: '0.0.0.0',
-		  port: process.env.PORT || 3000
+		  env: {
+			host: '0.0.0.0',
+			port: '$PORT'
+		  }
 		})
 	  }
 	}
