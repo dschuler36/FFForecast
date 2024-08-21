@@ -11,4 +11,4 @@ COPY ./src ./src
 ENV POSTGRES_CONN_STRING=postgresql+asyncpg://postgres:ff@database:5432/ff
 
 WORKDIR ./src
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "--port=${PORT:-5000}"]
