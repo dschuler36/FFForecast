@@ -7,17 +7,13 @@ const config = {
 	// for more information about preprocessors
 	preprocess: vitePreprocess(),
 
-    kit: {
-        adapter: adapter({
-            // default options are shown
-            out: 'build',
-            precompress: false,
-            env: {
-                port: process.env.PORT || 3000,
-                host: '0.0.0.0'
-            }
-        })
-    }
+	kit: {
+		adapter: adapter({
+		  out: '.svelte-kit/output/server',
+		  target: '0.0.0.0',
+		  port: process.env.PORT || 3000
+		})
+	  }
 	}
 ;
 
