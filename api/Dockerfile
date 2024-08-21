@@ -7,8 +7,10 @@ COPY ./requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY ./src ./src
+COPY ./start-app.sh ./src
 
 ENV POSTGRES_CONN_STRING=postgresql+asyncpg://postgres:ff@database:5432/ff
-
+ENV PORT=8000
 WORKDIR ./src
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "--port=${PORT:-5000}"]
+
+CMD ["./start-app.sh"]
