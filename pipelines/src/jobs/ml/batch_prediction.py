@@ -2,7 +2,7 @@ import joblib
 import pandas as pd
 import polars as pl
 
-from jobs.shared.columns import model_input_vars, model_prediction_vars
+from jobs.shared.constants import model_input_vars, model_prediction_vars
 from shared.settings import settings
 
 

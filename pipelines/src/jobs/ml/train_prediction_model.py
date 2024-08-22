@@ -5,7 +5,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import OneHotEncoder
 
-from jobs.shared.columns import model_input_vars, model_prediction_vars
+from jobs.shared.constants import model_input_vars, model_prediction_vars
 from shared.settings import settings
 
 
@@ -66,7 +66,6 @@ def save_model_and_preprocessor(model, preprocessor, model_filename, preprocesso
 
 def main(season: int, week: int):
     df = read_weekly_stats()
-    print(df)
     model, preprocessor = train_model(df)
     model_filename = settings.FF_PREDICTION_MODEL_FILE.format(season=season, week=week)
     preprocessor_filename = settings.FF_PREDICTION_PREPROCESSOR_FILE.format(season=season, week=week)
