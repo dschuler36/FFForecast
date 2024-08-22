@@ -19,8 +19,8 @@ async function getFullPprPredictions(season: number, week: number) {
 
 export const load: Load = async ({ parent }) => {
     try {
-        const halfPprPredictions = await getHalfPprPredictions(2023, 1);
-        const fullPprPredictions = await getFullPprPredictions(2023, 1);
+        const halfPprPredictions = await getHalfPprPredictions(2024, 1);
+        const fullPprPredictions = await getFullPprPredictions(2024, 1);
         return {
             props: {
                 halfPprPredictions, 
