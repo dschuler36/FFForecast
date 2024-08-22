@@ -2,6 +2,7 @@ import joblib
 import pandas as pd
 import polars as pl
 
+from jobs.shared.columns import model_input_vars, model_prediction_vars
 from shared.settings import settings
 
 
@@ -56,15 +57,11 @@ def insert_to_db(df: pd.DataFrame) -> None:
 
 def main(season: int, week: int):
     df = read_weekly_roster(season, week)
-    input_cols = ['player_id', 'team', 'opponent', 'position']
-    target_variables = ['passing_yards', 'passing_tds', 'interceptions', 'fumbles', 'rushing_yards', 'rushing_tds',
-                        'rushing_2pt_conversions', 'receptions', 'receiving_yards', 'receiving_tds',
-                        'receiving_2pt_conversions', 'passing_2pt_conversions']
-    subset_df = df[input_cols]
+    subset_df = df[model_input_vars]
     model_filename = settings.FF_PREDICTION_MODEL_FILE.format(season=season, week=week)
     preprocessor_filename = settings.FF_PREDICTION_PREPROCESSOR_FILE.format(season=season, week=week)
     model, preprocessor = load_model_and_preprocessor(model_filename, preprocessor_filename)
     predictions = create_predictions(subset_df, model, preprocessor)
-    formatted_predictions = format_predictions(predictions, subset_df, target_variables)
+    formatted_predictions = format_predictions(predictions, subset_df, model_prediction_vars)
     final_df = create_final_predictions_df(formatted_predictions, df, season, week)
     insert_to_db(final_df)
