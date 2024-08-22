@@ -5,6 +5,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import OneHotEncoder
 
+from jobs.shared.columns import model_input_vars, model_prediction_vars
 from shared.settings import settings
 
 
@@ -25,27 +26,17 @@ def create_preprocessor(cat_features_to_encode):
 
 
 def train_model(df: pd.DataFrame):
-    # Data preprocessing steps
-    df = df.dropna(axis=1, how='all')
-    df = df.loc[:, (df != 0).any(axis=0)]
-    df = df.loc[:, df.nunique() > 1]
-
     train_data = df[df['season'].isin([2020, 2021, 2022])]
     test_data = df[df['season'] == 2023]
 
-    cat_features_to_encode = ['player_id', 'team', 'opponent', 'position']
-    target_variables = ['passing_yards', 'passing_tds', 'interceptions', 'fumbles', 'rushing_yards', 'rushing_tds',
-                        'rushing_2pt_conversions', 'receptions', 'receiving_yards', 'receiving_tds',
-                        'receiving_2pt_conversions', 'passing_2pt_conversions']
-
     # Create and fit the preprocessor
-    preprocessor = create_preprocessor(cat_features_to_encode)
+    preprocessor = create_preprocessor(model_input_vars)
 
     # Prepare the data
-    X_train = train_data[cat_features_to_encode]
-    y_train = train_data[target_variables]
-    X_test = test_data[cat_features_to_encode]
-    y_test = test_data[target_variables]
+    X_train = train_data[model_input_vars]
+    y_train = train_data[model_prediction_vars]
+    X_test = test_data[model_input_vars]
+    y_test = test_data[model_prediction_vars]
 
     # Fit the preprocessor and transform the data
     X_train_preprocessed = preprocessor.fit_transform(X_train)
@@ -75,6 +66,7 @@ def save_model_and_preprocessor(model, preprocessor, model_filename, preprocesso
 
 def main(season: int, week: int):
     df = read_weekly_stats()
+    print(df)
     model, preprocessor = train_model(df)
     model_filename = settings.FF_PREDICTION_MODEL_FILE.format(season=season, week=week)
     preprocessor_filename = settings.FF_PREDICTION_PREPROCESSOR_FILE.format(season=season, week=week)
