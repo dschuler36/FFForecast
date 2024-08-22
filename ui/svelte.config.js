@@ -9,17 +9,6 @@ const config = {
 	kit: {
 		adapter: adapter()
 	}
-
-	// kit: {
-	// 	adapter: adapter({
-	// 	  out: '.svelte-kit/output/server',
-	// 	  env: {
-	// 		host: '0.0.0.0',
-	// 		port: '$PORT'
-	// 	  }
-	// 	})
-	//   }
-	}
-;
+};
 
 export default config;
