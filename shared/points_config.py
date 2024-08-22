@@ -23,7 +23,7 @@ class PointsConfig:
 
 
 STANDARD_PPR = PointsConfig(
-    pp_qb_yd=0.01,
+    pp_qb_yd=0.04,
     pp_qb_td=4,
     pp_rec=1,
     pp_rec_yd=0.1,
@@ -44,7 +44,7 @@ STANDARD_PPR = PointsConfig(
 )
 
 STANDARD_HALF_PPR = PointsConfig(
-    pp_qb_yd=0.01,
+    pp_qb_yd=0.04,
     pp_qb_td=4,
     pp_rec=0.5,
     pp_rec_yd=0.1,

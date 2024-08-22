@@ -14,7 +14,7 @@ async def get_half_ppr_predictions(
 
 
 @router.get('/predictions/full_ppr')
-async def get_half_ppr_predictions(
+async def get_full_ppr_predictions(
         season: int,
         week: int,
         predictions_service: PredictionsService = Depends(deps.get_predictions_service)):

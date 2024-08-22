@@ -29,37 +29,51 @@
 
     export let data: {
         props: { 
-            halfPprPredictions: Array<any>
+            halfPprPredictions: Array<any>,
+            fullPprPredictions: Array<any>
         } 
     };
-    let players: PlayerStats[] = data.props.halfPprPredictions;
+    let halfPprRankings: PlayerStats[] = data.props.halfPprPredictions;
+    let fullPprRankings: PlayerStats[] = data.props.fullPprPredictions;
+
     let selectedPosition: string = 'All';
+    let scoringType: 'half' | 'full' = 'half';
+
     function filterPlayers(position: string) {
         selectedPosition = position;
     }
 
-  $: filteredPlayers = selectedPosition === 'All'
-    ? players
-    : selectedPosition === 'Flex'
-    ? players.filter(player => ['RB', 'WR', 'TE'].includes(player.base.position))
-    : players.filter(player => player.base.position === selectedPosition);
+    function switchScoringType(type: 'half' | 'full') {
+        scoringType = type;
+    }
 
+    $: filteredPlayers = (scoringType === 'half' ? halfPprRankings : fullPprRankings)
+        .filter(player => 
+            selectedPosition === 'All' ? true :
+            selectedPosition === 'Flex' ? ['RB', 'WR', 'TE'].includes(player.base.position) :
+            player.base.position === selectedPosition
+        );
 </script>
 
-
 <main class="container mx-auto p-4">
-  <h1 class="text-3xl font-bold mb-4">NumbersFF - Predictions</h1>
-  <h2 class="text-3 font-bold mb-4">2024 Week 1</h2>
-  <div class="mb-4">
-    <div class="btn-group">
-      <button class="btn btn-sm" class:btn-active={selectedPosition === 'All'} on:click={() => filterPlayers('All')}>All</button>
-      <button class="btn btn-sm" class:btn-active={selectedPosition === 'QB'} on:click={() => filterPlayers('QB')}>QB</button>
-      <button class="btn btn-sm" class:btn-active={selectedPosition === 'RB'} on:click={() => filterPlayers('RB')}>RB</button>
-      <button class="btn btn-sm" class:btn-active={selectedPosition === 'WR'} on:click={() => filterPlayers('WR')}>WR</button>
-      <button class="btn btn-sm" class:btn-active={selectedPosition === 'TE'} on:click={() => filterPlayers('TE')}>TE</button>
-      <button class="btn btn-sm" class:btn-active={selectedPosition === 'Flex'} on:click={() => filterPlayers('Flex')}>Flex</button>
+    <h1 class="text-3xl font-bold mb-4">NumbersFF - Predictions</h1>
+    <h2 class="text-3 font-bold mb-4">2024 Week 1</h2>
+    <div class="mb-4">
+        <div class="btn-group">
+            <button class="btn btn-sm" class:btn-active={scoringType === 'half'} on:click={() => switchScoringType('half')}>Half PPR</button>
+            <button class="btn btn-sm" class:btn-active={scoringType === 'full'} on:click={() => switchScoringType('full')}>Full PPR</button>
+        </div>
     </div>
-  </div>
+    <div class="mb-4">
+        <div class="btn-group">
+            <button class="btn btn-sm" class:btn-active={selectedPosition === 'All'} on:click={() => filterPlayers('All')}>All</button>
+            <button class="btn btn-sm" class:btn-active={selectedPosition === 'QB'} on:click={() => filterPlayers('QB')}>QB</button>
+            <button class="btn btn-sm" class:btn-active={selectedPosition === 'RB'} on:click={() => filterPlayers('RB')}>RB</button>
+            <button class="btn btn-sm" class:btn-active={selectedPosition === 'WR'} on:click={() => filterPlayers('WR')}>WR</button>
+            <button class="btn btn-sm" class:btn-active={selectedPosition === 'TE'} on:click={() => filterPlayers('TE')}>TE</button>
+            <button class="btn btn-sm" class:btn-active={selectedPosition === 'Flex'} on:click={() => filterPlayers('Flex')}>Flex</button>
+        </div>
+    </div>
   
   <div class="overflow-x-auto">
     <table class="table table-zebra w-full">
