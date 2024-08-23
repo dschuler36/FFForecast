@@ -4,7 +4,7 @@ import polars as pl
 import nfl_data_py as nfl
 from polars import count
 
-from jobs.shared.data_access import pull_schedules
+from jobs.shared.data_access import pull_schedules, pull_depth_chart
 from shared.settings import settings
 
 
@@ -62,6 +62,14 @@ def join_with_schedule_df(stats_df: pl.DataFrame, sched_df: pl.DataFrame):
     return merged_df
 
 
+def join_stats_with_depth_chart(stats_df: pl.DataFrame, depth_df: pl.DataFrame) -> pl.DataFrame:
+    depth_df = depth_df.select(pl.col('gsis_id').alias('player_id'),
+                               'depth_ranking',
+                               pl.col('week').cast(pl.Int64).alias('week'),
+                               pl.col('season').cast(pl.Int64).alias('season'))
+    return stats_df.join(depth_df, on=['player_id', 'week', 'season'])
+
+
 
 def select_output_cols(df: pl.DataFrame) -> pl.DataFrame:
     return df.select(
@@ -73,7 +81,7 @@ def select_output_cols(df: pl.DataFrame) -> pl.DataFrame:
         'rushing_epa', 'rushing_2pt_conversions', 'receptions', 'targets', 'receiving_yards', 'receiving_tds',
         'receiving_air_yards', 'receiving_yards_after_catch', 'receiving_epa',
         'receiving_2pt_conversions', 'racr', 'target_share', 'air_yards_share', 'wopr', 'special_teams_tds',
-        'fantasy_points', 'fantasy_points_ppr'
+        'depth_ranking', 'fantasy_points', 'fantasy_points_ppr'
     )
 
 
@@ -96,5 +104,7 @@ def main(seasons: List[int], week: int = None):
     fantasy_df = filter_down_to_fantasy_positions(nfl_df)
     combined_fumble_df = combine_fumble_columns(fantasy_df)
     merged_df = join_with_schedule_df(combined_fumble_df, schedule_df)
-    final_df = select_output_cols(merged_df)
+    depth_df = pull_depth_chart(seasons, week)
+    stats_with_depth_df = join_stats_with_depth_chart(merged_df, depth_df)
+    final_df = select_output_cols(stats_with_depth_df)
     insert_to_db(final_df)

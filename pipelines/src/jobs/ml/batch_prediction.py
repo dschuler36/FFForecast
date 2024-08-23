@@ -2,7 +2,7 @@ import joblib
 import pandas as pd
 import polars as pl
 
-from jobs.shared.columns import model_input_vars, model_prediction_vars
+from jobs.shared.constants import cat_features, model_prediction_vars, numerical_features
 from shared.settings import settings
 
 
@@ -57,7 +57,7 @@ def insert_to_db(df: pd.DataFrame) -> None:
 
 def main(season: int, week: int):
     df = read_weekly_roster(season, week)
-    subset_df = df[model_input_vars]
+    subset_df = df[cat_features + numerical_features]
     model_filename = settings.FF_PREDICTION_MODEL_FILE.format(season=season, week=week)
     preprocessor_filename = settings.FF_PREDICTION_PREPROCESSOR_FILE.format(season=season, week=week)
     model, preprocessor = load_model_and_preprocessor(model_filename, preprocessor_filename)
