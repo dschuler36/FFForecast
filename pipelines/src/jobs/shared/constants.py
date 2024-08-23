@@ -1,4 +1,5 @@
-model_input_vars = ['player_id', 'team', 'opponent', 'position', 'home_away']
+cat_features = ['player_id', 'team', 'opponent', 'position', 'home_away']
+numerical_features = ['depth_ranking']
 
 model_prediction_vars = ['passing_yards', 'passing_tds', 'interceptions', 'fumbles', 'rushing_yards', 'rushing_tds',
                         'rushing_2pt_conversions', 'receptions', 'receiving_yards', 'receiving_tds',

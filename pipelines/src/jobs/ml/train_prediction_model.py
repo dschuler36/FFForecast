@@ -5,7 +5,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import OneHotEncoder
 
-from jobs.shared.constants import model_input_vars, model_prediction_vars
+from jobs.shared.constants import cat_features, model_prediction_vars, numerical_features
 from shared.settings import settings
 
 
@@ -30,12 +30,12 @@ def train_model(df: pd.DataFrame):
     test_data = df[df['season'] == 2023]
 
     # Create and fit the preprocessor
-    preprocessor = create_preprocessor(model_input_vars)
+    preprocessor = create_preprocessor(cat_features)
 
     # Prepare the data
-    X_train = train_data[model_input_vars]
+    X_train = train_data[cat_features + numerical_features]
     y_train = train_data[model_prediction_vars]
-    X_test = test_data[model_input_vars]
+    X_test = test_data[cat_features + numerical_features]
     y_test = test_data[model_prediction_vars]
 
     # Fit the preprocessor and transform the data

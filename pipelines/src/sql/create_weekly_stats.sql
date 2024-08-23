@@ -43,6 +43,7 @@ CREATE TABLE weekly_stats (
     air_yards_share REAL,
     wopr REAL,
     special_teams_tds REAL,
+    depth_ranking INT,
     fantasy_points REAL,
     fantasy_points_ppr REAL,
     UNIQUE (player_id, week, season)

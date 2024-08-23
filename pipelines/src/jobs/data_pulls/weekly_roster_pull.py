@@ -1,10 +1,9 @@
 import nfl_data_py as nfl
 import polars as pl
 import pandas as pd
-from pyarrow import int16
 
 from jobs.shared.constants import positions
-from jobs.shared.data_access import pull_schedules
+from jobs.shared.data_access import pull_schedules, pull_depth_chart
 from shared.settings import settings
 
 
@@ -24,27 +23,18 @@ def read_stadium_details() -> pl.DataFrame:
     return pl.from_pandas(df)
 
 
-def pull_depth_chart(season: int, week: int) -> pl.DataFrame:
-    depth_df = pl.from_pandas(nfl.import_depth_charts([season])) \
-                 .filter(pl.col('week') == week) \
-                 .filter(pl.col('position').is_in(positions))
-    return depth_df
-
-
 def filter_depth_chart(df: pl.DataFrame) -> pl.DataFrame:
-    df = df.with_columns(pl.col('depth_team').cast(pl.Int8))
+    qbs = df.filter(pl.col('position') == 'QB') \
+            .filter(pl.col('depth_ranking') <= 1)
 
-    qbs = df.filter(pl.col('depth_position') == 'QB') \
-            .filter(pl.col('depth_team') <= 1)
+    rbs = df.filter(pl.col('position') == 'RB') \
+            .filter(pl.col('depth_ranking') <= 3)
 
-    rbs = df.filter(pl.col('depth_position') == 'RB') \
-            .filter(pl.col('depth_team') <= 3)
+    wrs = df.filter(pl.col('position') == 'WR') \
+            .filter(pl.col('depth_ranking') <= 4)
 
-    wrs = df.filter(pl.col('depth_position') == 'WR') \
-            .filter(pl.col('depth_team') <= 4)
-
-    tes = df.filter(pl.col('depth_position') == 'TE') \
-            .filter(pl.col('depth_team') <= 2)
+    tes = df.filter(pl.col('position') == 'TE') \
+            .filter(pl.col('depth_ranking') <= 2)
 
     return pl.concat(items=[qbs, rbs, wrs, tes])
 
@@ -59,7 +49,7 @@ def filter_to_active_players(df: pl.DataFrame) -> pl.DataFrame:
 
 
 def join_roster_with_depth_chart(roster_df: pl.DataFrame, depth_df: pl.DataFrame) -> pl.DataFrame:
-    depth_df = depth_df.select('gsis_id', pl.col('depth_team').alias('depth_ranking'))
+    depth_df = depth_df.select('gsis_id', 'depth_ranking')
     return roster_df.join(depth_df, left_on='player_id', right_on='gsis_id', how='inner')
 
 
@@ -99,9 +89,8 @@ def main(season: int, week: int):
     active_players_df = filter_to_active_players(weekly_roster_df)
 
     # depth chart prep
-    depth_df = pull_depth_chart(season, week)
+    depth_df = pull_depth_chart([season], week)
     top_depth_df = filter_depth_chart(depth_df)
-
 
     # opponent prep
     opponent_df = pull_schedules(season, week)
