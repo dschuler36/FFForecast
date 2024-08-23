@@ -18,7 +18,6 @@ class PredictionsService:
                 WeeklyPredictionBase.week == week
             )
             .order_by(league_config_predictions.fantasy_points.desc())
-            .limit(150)
         )
         return stmt
 
