@@ -1,3 +1,4 @@
+import numpy as np
 import joblib
 import pandas as pd
 from sklearn.compose import ColumnTransformer
@@ -8,13 +9,11 @@ from sklearn.preprocessing import OneHotEncoder
 from jobs.shared.constants import cat_features, model_prediction_vars, numerical_features
 from shared.settings import settings
 
-
 def read_weekly_stats() -> pd.DataFrame:
     return pd.read_sql(
         sql='select * from weekly_stats;',
         con=settings.POSTGRES_CONN_STRING
     )
-
 
 def create_preprocessor(cat_features_to_encode):
     return ColumnTransformer(
@@ -24,45 +23,77 @@ def create_preprocessor(cat_features_to_encode):
         remainder='passthrough'
     )
 
-
 def train_model(df: pd.DataFrame):
-    train_data = df[df['season'].isin([2020, 2021, 2022])]
-    test_data = df[df['season'] == 2023]
+    # Sort data by season and week to maintain temporal order
+    df = df.sort_values(by=['season', 'week'])
 
-    # Create and fit the preprocessor
+    # Initialize the preprocessor
     preprocessor = create_preprocessor(cat_features)
 
-    # Prepare the data
-    X_train = train_data[cat_features + numerical_features]
-    y_train = train_data[model_prediction_vars]
-    X_test = test_data[cat_features + numerical_features]
-    y_test = test_data[model_prediction_vars]
+    # Prepare the feature matrix and target variable
+    X = df[cat_features + numerical_features]
+    y = df[model_prediction_vars]
 
-    # Fit the preprocessor and transform the data
-    X_train_preprocessed = preprocessor.fit_transform(X_train)
+    # Fit the preprocessor on the entire dataset
+    X_preprocessed = preprocessor.fit_transform(X)
 
-    # Initialize and train the model
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
-    model.fit(X_train_preprocessed, y_train)
+    # Create a weight vector based on week and season
+    # More recent weeks get higher weight, and recent seasons can be scaled similarly
+    df['week_weight'] = np.exp(df['week'] / df['week'].max())
+    df['season_weight'] = df['season'] / df['season'].max()
 
-    # Transform test data and make predictions
-    X_test_preprocessed = preprocessor.transform(X_test)
-    y_pred = model.predict(X_test_preprocessed)
+    # Combine weights
+    sample_weights = df['week_weight'] * df['season_weight']
 
-    mse = mean_squared_error(y_test, y_pred)
-    mae = mean_absolute_error(y_test, y_pred)
+    # Define the seasons for manual splits
+    season_splits = {
+        1: (df['season'] <= 2020, df['season'] == 2021),
+        2: (df['season'] <= 2021, df['season'] == 2022),
+        3: (df['season'] <= 2022, df['season'] == 2023),
+    }
 
-    print(f"Mean Squared Error on 2023 data: {mse}")
-    print(f"Mean Absolute Error on 2023 data: {mae}")
+    mse_scores = []
+    mae_scores = []
+
+    # Perform cross-validation based on season splits with sample weighting
+    for split_id, (train_condition, test_condition) in season_splits.items():
+        X_train = X_preprocessed[train_condition]
+        y_train = y[train_condition]
+        sample_weights_train = sample_weights[train_condition]
+
+        X_test = X_preprocessed[test_condition]
+        y_test = y[test_condition]
+
+        # Initialize and train the model with sample weights
+        model = RandomForestRegressor(n_estimators=100, random_state=42)
+        model.fit(X_train, y_train, sample_weight=sample_weights_train)
+
+        # Make predictions on the test set
+        y_pred = model.predict(X_test)
+
+        # Calculate errors
+        mse = mean_squared_error(y_test, y_pred)
+        mae = mean_absolute_error(y_test, y_pred)
+        mse_scores.append(mse)
+        mae_scores.append(mae)
+
+        print(f"Season {split_id} - MSE: {mse}, MAE: {mae}")
+
+    # Average the scores across seasons
+    avg_mse = np.mean(mse_scores)
+    avg_mae = np.mean(mae_scores)
+
+    print(f"Average MSE: {avg_mse}")
+    print(f"Average MAE: {avg_mae}")
+
+    # Fit the final model on all data up to the latest available season
+    model.fit(X_preprocessed, y, sample_weight=sample_weights)
 
     return model, preprocessor
 
-
-# Save model and preprocessor
 def save_model_and_preprocessor(model, preprocessor, model_filename, preprocessor_filename):
     joblib.dump(model, model_filename)
     joblib.dump(preprocessor, preprocessor_filename)
-
 
 def main(season: int, week: int):
     df = read_weekly_stats()
