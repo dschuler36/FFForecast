@@ -1,18 +1,9 @@
 from typing import List
 
 import polars as pl
-import nfl_data_py as nfl
-from polars import count
 
-from jobs.shared.data_access import pull_schedules, pull_depth_chart
+from jobs.shared.data_access import pull_depth_chart, pull_roster, pull_schedule, pull_stats_agg
 from shared.settings import settings
-
-
-def pull_nfl_data(seasons: List[int], week: int = None) -> pl.DataFrame:
-    nfl_df = pl.from_pandas(nfl.import_weekly_data(seasons))
-    if week is not None:
-        nfl_df = nfl_df.filter(pl.col('week') == week)
-    return nfl_df
 
 
 def filter_down_to_fantasy_positions(df: pl.DataFrame) -> pl.DataFrame:
@@ -70,11 +61,19 @@ def join_stats_with_depth_chart(stats_df: pl.DataFrame, depth_df: pl.DataFrame) 
     return stats_df.join(depth_df, on=['player_id', 'week', 'season'])
 
 
+def join_stats_with_roster(stats_df: pl.DataFrame, roster_df: pl.DataFrame) -> pl.DataFrame:
+    join_keys = ['season', 'week', 'player_id']
+    roster_df = roster_df.with_columns(pl.col('season').cast(pl.Int64)) \
+                         .with_columns(pl.col('week').cast(pl.Int64)) \
+                         .select(*join_keys, 'age')
+    return stats_df.join(roster_df, on=join_keys)
+
+
 
 def select_output_cols(df: pl.DataFrame) -> pl.DataFrame:
     return df.select(
         'player_id', 'player_display_name', 'position', 'headshot_url', pl.col('recent_team').alias('team'),
-        'season', 'week', pl.col('opponent_team').alias('opponent'), 'home_away', 'completions', 'attempts',
+        'season', 'week', pl.col('opponent_team').alias('opponent'), 'home_away', 'age', 'completions', 'attempts',
         'passing_yards', 'passing_tds', 'interceptions', 'fumbles', 'sacks',
         'sack_yards', 'passing_air_yards', 'passing_yards_after_catch', 'passing_first_downs', 'passing_epa',
         'passing_2pt_conversions', 'pacr', 'dakota', 'carries', 'rushing_yards', 'rushing_tds', 'rushing_first_downs',
@@ -93,18 +92,16 @@ def insert_to_db(df: pl.DataFrame) -> None:
     )
 
 def main(seasons: List[int], week: int = None):
-    nfl_df = pull_nfl_data(seasons, week)
-    schedule_df = None
-    for index, season in enumerate(seasons):
-        tmp_df = pull_schedules(season, week)
-        if index == 0:
-            schedule_df = tmp_df
-        else:
-            schedule_df = pl.concat(items=[schedule_df, tmp_df])
-    fantasy_df = filter_down_to_fantasy_positions(nfl_df)
+    stats_df = pull_stats_agg(seasons, week)
+    schedule_df = pull_schedule(seasons, week)
+    fantasy_df = filter_down_to_fantasy_positions(stats_df)
     combined_fumble_df = combine_fumble_columns(fantasy_df)
     merged_df = join_with_schedule_df(combined_fumble_df, schedule_df)
     depth_df = pull_depth_chart(seasons, week)
     stats_with_depth_df = join_stats_with_depth_chart(merged_df, depth_df)
-    final_df = select_output_cols(stats_with_depth_df)
+
+    roster_df = pull_roster(seasons, week)
+    stats_with_age_df = join_stats_with_roster(stats_with_depth_df, roster_df)
+
+    final_df = select_output_cols(stats_with_age_df)
     insert_to_db(final_df)
