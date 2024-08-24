@@ -8,6 +8,7 @@ CREATE TABLE weekly_stats (
     week INT,
     opponent VARCHAR,
     home_away VARCHAR,
+    age REAL,
     completions INT,
     attempts INT,
     passing_yards REAL,

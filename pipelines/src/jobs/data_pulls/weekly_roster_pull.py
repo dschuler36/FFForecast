@@ -1,18 +1,9 @@
-import nfl_data_py as nfl
-import polars as pl
 import pandas as pd
+import polars as pl
 
 from jobs.shared.constants import positions
-from jobs.shared.data_access import pull_schedules, pull_depth_chart
+from jobs.shared.data_access import pull_schedules, pull_depth_chart, pull_roster
 from shared.settings import settings
-
-
-def pull_weekly_roster(season: int, week: int) -> pl.DataFrame:
-    nfl_df = pl.from_pandas(nfl.import_weekly_rosters([season]))
-    if week is not None:
-        nfl_df = nfl_df.filter(pl.col('week') == week)
-    return nfl_df
-
 
 
 def read_stadium_details() -> pl.DataFrame:
@@ -71,8 +62,8 @@ def join_roster_with_schedule(roster_df: pl.DataFrame, opponents_df: pl.DataFram
 
 
 def select_output_cols(df: pl.DataFrame) -> pl.DataFrame:
-    return df.select('season', 'week', 'position', 'status', 'player_id', 'player_name', 'team', 'opponent',
-                     'home_away', 'depth_ranking')
+    return df.select('season', 'week', 'position', 'status', 'player_id', 'player_name', 'age', 'team',
+                     'opponent', 'home_away', 'depth_ranking')
 
 
 def insert_to_db(df: pl.DataFrame) -> None:
@@ -85,7 +76,7 @@ def insert_to_db(df: pl.DataFrame) -> None:
 def main(season: int, week: int):
 
     # weekly roster prep
-    weekly_roster_df = pull_weekly_roster(season, week)
+    weekly_roster_df = pull_roster([season], week)
     active_players_df = filter_to_active_players(weekly_roster_df)
 
     # depth chart prep
