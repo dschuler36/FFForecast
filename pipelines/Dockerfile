@@ -14,7 +14,7 @@ COPY shared ./shared
 COPY .env.local .
 
 ENV PIPELINE_TO_RUN=run_ml_pipeline.py
-ENV SEASON=2020
+ENV SEASON=2023
 ENV WEEK=1
 # commenting out so it doesn't always run locally when testing api
-# CMD python ${PIPELINE_TO_RUN} ${SEASON} ${WEEK}
+CMD python ${PIPELINE_TO_RUN} ${SEASON} ${WEEK}
