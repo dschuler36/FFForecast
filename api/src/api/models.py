@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, Float, String
+from sqlalchemy import Column, BigInteger, Float, String, Integer, Date, Time
 # from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_base
 
@@ -47,3 +47,16 @@ class WeeklyPredictionStdFullPPR(Base):
     player_id = Column(String, primary_key=True, nullable=False)
 
     fantasy_points = Column(Float)
+
+
+class Schedule(Base):
+    __tablename__ = 'schedule'
+
+    game_id = Column(String, primary_key=True)
+    season = Column(Integer, nullable=False)
+    week = Column(Integer, nullable=False)
+    gameday = Column(Date, nullable=False)
+    gametime = Column(Time, nullable=False)
+    weekdate = Column(String, nullable=False)
+    home_team = Column(String, nullable=False)
+    away_team = Column(String, nullable=False)

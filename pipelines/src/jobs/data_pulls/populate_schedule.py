@@ -5,7 +5,8 @@ from shared.settings import settings
 
 
 def select_output_cols(df: pl.DataFrame) -> pl.DataFrame:
-    return df.select('game_id', 'gameday', 'gametime', 'weekday', 'week', 'home_team', 'away_team')
+    return df.select('game_id', 'season', 'week', pl.col('gameday').cast(pl.Date),
+                     'gametime', 'weekday', 'home_team', 'away_team')
 
 
 def insert_to_db(df: pl.DataFrame) -> None:

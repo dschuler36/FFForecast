@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from api.routes import predictions
+from api.routes import predictions, schedule
+
 app = FastAPI()
 
 app.add_middleware(
@@ -14,3 +15,4 @@ app.add_middleware(
 
 
 app.include_router(predictions.router)
+app.include_router(schedule.router)
