@@ -3,6 +3,12 @@ import type { Load } from '@sveltejs/kit';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 
+async function getCurrentSeasonWeek() {
+    const response = await fetch(`${API_BASE_URL}/api/current-season-week`);
+    const responseData = await response.json();
+    return responseData; 
+}
+
 
 async function getHalfPprPredictions(season: number, week: number) {
     const response = await fetch(`${API_BASE_URL}/api/predictions/half_ppr?season=${season}&week=${week}`);
@@ -19,10 +25,15 @@ async function getFullPprPredictions(season: number, week: number) {
 
 export const load: Load = async ({ parent }) => {
     try {
-        const halfPprPredictions = await getHalfPprPredictions(2023, 1);
-        const fullPprPredictions = await getFullPprPredictions(2023, 1);
+        const seasonWeek = await getCurrentSeasonWeek();
+        const season = seasonWeek.season;
+        const week = seasonWeek.week;
+        const halfPprPredictions = await getHalfPprPredictions(season, week);
+        const fullPprPredictions = await getFullPprPredictions(season, week);
         return {
             props: {
+                season,
+                week,
                 halfPprPredictions, 
                 fullPprPredictions
             }
