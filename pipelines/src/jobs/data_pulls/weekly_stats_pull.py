@@ -3,6 +3,7 @@ from typing import List
 import polars as pl
 
 from jobs.shared.data_access import pull_depth_chart, pull_roster, pull_schedule, pull_stats_agg
+from jobs.shared.logging_config import logger
 from jobs.shared.settings import settings
 
 
@@ -92,6 +93,10 @@ def insert_to_db(df: pl.DataFrame) -> None:
     )
 
 def main(seasons: List[int], week: int = None):
+
+    logger.info(f'Running weekly_stats_pull for season {seasons} and week {week}')
+
+
     stats_df = pull_stats_agg(seasons, week)
     schedule_df = pull_schedule(seasons, week)
     fantasy_df = filter_down_to_fantasy_positions(stats_df)

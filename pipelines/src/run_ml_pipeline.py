@@ -1,5 +1,5 @@
 import argparse
-
+from jobs.shared.logging_config import logger
 from jobs.data_pulls import weekly_roster_pull
 from jobs.ml import train_prediction_model, batch_prediction, create_fantasy_points_default_configs
 
@@ -16,7 +16,7 @@ if __name__ == '__main__':
     season = args.season
     week = args.week
 
-    print(f'Running ML prediction pipeline for season: {season} and week {week}')
+    logger.info(f'Running ML prediction pipeline for season: {season} and week {week}')
 
     weekly_roster_pull.main(season=season, week=week)
     train_prediction_model.main(season=season, week=week)

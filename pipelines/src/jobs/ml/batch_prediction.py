@@ -3,6 +3,7 @@ import pandas as pd
 import polars as pl
 
 from jobs.shared.constants import cat_features, model_prediction_vars, numerical_features
+from jobs.shared.logging_config import logger
 from jobs.shared.settings import settings
 
 
@@ -56,6 +57,9 @@ def insert_to_db(df: pd.DataFrame) -> None:
 
 
 def main(season: int, week: int):
+
+    logger.info(f'Running weekly_stats_pull for season {season} and week {week}')
+
     df = read_weekly_roster(season, week)
     subset_df = df[cat_features + numerical_features]
     model_filename = settings.FF_PREDICTION_MODEL_FILE.format(season=season, week=week)

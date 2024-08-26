@@ -3,6 +3,7 @@ import polars as pl
 
 from jobs.shared.constants import positions
 from jobs.shared.data_access import pull_schedules, pull_depth_chart, pull_roster
+from jobs.shared.logging_config import logger
 from jobs.shared.settings import settings
 
 
@@ -74,6 +75,8 @@ def insert_to_db(df: pl.DataFrame) -> None:
     )
 
 def main(season: int, week: int):
+
+    logger.info(f'Running weekly_roster_pull for season {season} and week {week}')
 
     # weekly roster prep
     weekly_roster_df = pull_roster([season], week)
