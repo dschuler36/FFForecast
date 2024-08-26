@@ -5,11 +5,11 @@ WORKDIR /app
 # director for storing model artifacts
 RUN mkdir artifacts
 
-COPY pipelines/requirements.txt .
+COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY pipelines/src/ .
+COPY src/ .
 # COPY .env.local .
 
 ENV PIPELINE_TO_RUN=run_ml_pipeline.py
