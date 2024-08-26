@@ -3,7 +3,7 @@ import polars as pl
 
 from jobs.shared.constants import positions
 from jobs.shared.data_access import pull_schedules, pull_depth_chart, pull_roster
-from shared.settings import settings
+from jobs.shared.settings import settings
 
 
 def read_stadium_details() -> pl.DataFrame:

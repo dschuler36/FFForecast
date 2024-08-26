@@ -1,7 +1,7 @@
 from jobs.shared.data_access import pull_schedule
 import polars as pl
 
-from shared.settings import settings
+from jobs.shared.settings import settings
 
 
 def select_output_cols(df: pl.DataFrame) -> pl.DataFrame:

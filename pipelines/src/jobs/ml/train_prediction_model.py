@@ -7,7 +7,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import OneHotEncoder
 
 from jobs.shared.constants import cat_features, model_prediction_vars, numerical_features
-from shared.settings import settings
+from jobs.shared.settings import settings
 
 def read_weekly_stats() -> pd.DataFrame:
     return pd.read_sql(

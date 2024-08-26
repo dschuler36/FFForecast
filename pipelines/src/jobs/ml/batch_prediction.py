@@ -3,7 +3,7 @@ import pandas as pd
 import polars as pl
 
 from jobs.shared.constants import cat_features, model_prediction_vars, numerical_features
-from shared.settings import settings
+from jobs.shared.settings import settings
 
 
 def read_weekly_roster(season: int, week: int) -> pd.DataFrame:

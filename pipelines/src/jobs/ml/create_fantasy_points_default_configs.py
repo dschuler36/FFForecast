@@ -1,8 +1,8 @@
 import polars as pl
 import pandas as pd
-from shared.points_calc import calculate_fantasy_points
-from shared.points_config import PointsConfig, STANDARD_PPR, STANDARD_HALF_PPR
-from shared.settings import settings
+from jobs.shared.points_calc import calculate_fantasy_points
+from jobs.shared.points_config import PointsConfig, STANDARD_PPR, STANDARD_HALF_PPR
+from jobs.shared.settings import settings
 
 
 def read_weekly_predictions_base(season: int, week: int) -> pl.DataFrame:

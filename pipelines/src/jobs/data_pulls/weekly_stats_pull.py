@@ -3,7 +3,7 @@ from typing import List
 import polars as pl
 
 from jobs.shared.data_access import pull_depth_chart, pull_roster, pull_schedule, pull_stats_agg
-from shared.settings import settings
+from jobs.shared.settings import settings
 
 
 def filter_down_to_fantasy_positions(df: pl.DataFrame) -> pl.DataFrame:
