@@ -10,7 +10,7 @@ RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ .
-COPY ./.env.local .
+# COPY ./.env.local .
 
 ENV PIPELINE_TO_RUN=run_ml_pipeline.py
 ENV SEASON=2023

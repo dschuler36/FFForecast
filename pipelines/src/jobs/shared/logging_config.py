@@ -2,7 +2,7 @@
 import logging
 
 def setup_logger():
-    logger = logging.getLogger('my_app')
+    logger = logging.getLogger('numbersff-pipelines')
     logger.setLevel(logging.INFO)
 
 

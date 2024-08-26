@@ -96,7 +96,6 @@ def main(seasons: List[int], week: int = None):
 
     logger.info(f'Running weekly_stats_pull for season {seasons} and week {week}')
 
-
     stats_df = pull_stats_agg(seasons, week)
     schedule_df = pull_schedule(seasons, week)
     fantasy_df = filter_down_to_fantasy_positions(stats_df)
