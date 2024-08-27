@@ -1,11 +1,9 @@
 import argparse
 
-from pkg_resources import require
-
-from jobs.shared.api_utils import get_current_season_week
-from jobs.shared.logging_config import logger
 from jobs.data_pulls import weekly_roster_pull
 from jobs.ml import train_prediction_model, batch_prediction, create_fantasy_points_default_configs
+from jobs.shared.api_utils import get_current_season_week
+from jobs.shared.logging_config import logger
 
 
 def parse_args():
