@@ -1,7 +1,8 @@
 from jobs.shared.data_access import pull_schedule
 import polars as pl
 
-from shared.settings import settings
+from jobs.shared.logging_config import logger
+from jobs.shared.settings import settings
 
 
 def select_output_cols(df: pl.DataFrame) -> pl.DataFrame:
@@ -18,6 +19,9 @@ def insert_to_db(df: pl.DataFrame) -> None:
 
 
 def main(season: int):
+
+    logger.info(f'Running populate_schedule for season {season} and week {week}')
+
     schedule_df = pull_schedule([season], None)
     output_df = select_output_cols(schedule_df)
     insert_to_db(output_df)

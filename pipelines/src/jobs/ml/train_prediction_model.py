@@ -7,7 +7,8 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import OneHotEncoder
 
 from jobs.shared.constants import cat_features, model_prediction_vars, numerical_features
-from shared.settings import settings
+from jobs.shared.logging_config import logger
+from jobs.shared.settings import settings
 
 def read_weekly_stats() -> pd.DataFrame:
     return pd.read_sql(
@@ -96,6 +97,9 @@ def save_model_and_preprocessor(model, preprocessor, model_filename, preprocesso
     joblib.dump(preprocessor, preprocessor_filename)
 
 def main(season: int, week: int):
+
+    logger.info(f'Running weekly_stats_pull for season {season} and week {week}')
+
     df = read_weekly_stats()
     model, preprocessor = train_model(df)
     model_filename = settings.FF_PREDICTION_MODEL_FILE.format(season=season, week=week)
