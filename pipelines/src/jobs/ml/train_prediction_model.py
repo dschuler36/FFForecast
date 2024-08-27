@@ -78,14 +78,14 @@ def train_model(df: pd.DataFrame):
         mse_scores.append(mse)
         mae_scores.append(mae)
 
-        print(f"Season {split_id} - MSE: {mse}, MAE: {mae}")
+        logger.info(f"Season {split_id} - MSE: {mse}, MAE: {mae}")
 
     # Average the scores across seasons
     avg_mse = np.mean(mse_scores)
     avg_mae = np.mean(mae_scores)
 
-    print(f"Average MSE: {avg_mse}")
-    print(f"Average MAE: {avg_mae}")
+    logger.info(f"Average MSE: {avg_mse}")
+    logger.info(f"Average MAE: {avg_mae}")
 
     # Fit the final model on all data up to the latest available season
     model.fit(X_preprocessed, y, sample_weight=sample_weights)
