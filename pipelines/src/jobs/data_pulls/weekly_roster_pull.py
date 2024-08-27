@@ -1,8 +1,12 @@
+import urllib
+from datetime import datetime
+
 import pandas as pd
 import polars as pl
 
 from jobs.shared.constants import positions
-from jobs.shared.data_access import pull_schedules, pull_depth_chart, pull_roster
+from jobs.shared.data_access import pull_schedules, pull_depth_chart, pull_roster, fallback_week
+from jobs.shared.job_status_handler import JobStatusHandler
 from jobs.shared.logging_config import logger
 from jobs.shared.settings import settings
 
@@ -41,8 +45,8 @@ def filter_to_active_players(df: pl.DataFrame) -> pl.DataFrame:
 
 
 def join_roster_with_depth_chart(roster_df: pl.DataFrame, depth_df: pl.DataFrame) -> pl.DataFrame:
-    depth_df = depth_df.select('gsis_id', 'depth_ranking')
-    return roster_df.join(depth_df, left_on='player_id', right_on='gsis_id', how='inner')
+    depth_df = depth_df.select('player_id', 'depth_ranking')
+    return roster_df.join(depth_df, on='player_id', how='inner')
 
 
 def join_roster_with_schedule(roster_df: pl.DataFrame, opponents_df: pl.DataFrame) -> pl.DataFrame:
@@ -79,11 +83,25 @@ def main(season: int, week: int):
     logger.info(f'Running weekly_roster_pull for season {season} and week {week}')
 
     # weekly roster prep
+
     weekly_roster_df = pull_roster([season], week)
     active_players_df = filter_to_active_players(weekly_roster_df)
 
     # depth chart prep
-    depth_df = pull_depth_chart([season], week)
+    try:
+        depth_df = pull_depth_chart([season], week)
+        depth_season = season
+        depth_week = week
+    except urllib.error.HTTPError as e:
+        if e.status == 404:
+            prev_season, prev_week = fallback_week(season, week)
+            logger.info(f'Depth chart for {season} {week} not ready. Falling back to {prev_season} {prev_week}')
+            depth_df = pull_depth_chart([prev_season], prev_week)
+            depth_season = prev_season
+            depth_week = prev_week
+        else:
+            raise e
+
     top_depth_df = filter_depth_chart(depth_df)
 
     # opponent prep
@@ -96,3 +114,18 @@ def main(season: int, week: int):
     roster_with_opponent_df = join_roster_with_schedule(roster_filtered_by_depth_df, opponent_with_stadium_df)
     output_df = select_output_cols(roster_with_opponent_df)
     insert_to_db(output_df)
+
+    job_status = JobStatusHandler(
+        job='weekly_roster_pull',
+        status='completed',
+        season=season,
+        week=week,
+        stats_season=None,
+        stats_week=None,
+        roster_season=season,
+        roster_week=week,
+        depth_season=depth_season,
+        depth_week=depth_week,
+        completed_time=datetime.now()
+    )
+    job_status.insert_into_db()

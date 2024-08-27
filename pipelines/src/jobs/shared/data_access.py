@@ -21,7 +21,8 @@ def pull_depth_chart(seasons: List[int], week: int) -> pl.DataFrame:
                  .select('season', 'club_code', 'week', 'depth_team', 'gsis_id', 'position') \
                  .unique() \
                  .group_by(['season', 'club_code', 'week', 'gsis_id', 'position']) \
-                 .agg(pl.max('depth_team').cast(pl.Int8).alias('depth_ranking'))
+                 .agg(pl.max('depth_team').cast(pl.Int8).alias('depth_ranking')) \
+                 .rename(mapping={'gsis_id': 'player_id'})
     if week is not None:
         depth_df = depth_df.filter(pl.col('week') == week)
     return depth_df
@@ -68,3 +69,10 @@ def pull_stats_agg(seasons: List[int], week: int = None) -> pl.DataFrame:
     if week is not None:
         nfl_df = nfl_df.filter(pl.col('week') == week)
     return nfl_df
+
+
+def fallback_week(season: int, week: int):
+    if week != 1:
+        return season, week - 1
+    else:
+        return season - 1, 16

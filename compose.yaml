@@ -17,10 +17,10 @@ services:
 
   pipelines:
     build:
-      context: .
-      dockerfile: pipelines/Dockerfile
+      context: ./pipelines/
+      dockerfile: Dockerfile
     env_file:
-      - .env.local
+      - ./pipelines/.env.local
     environment:
       - ENV_FILE=/api/.env.local
       - PIPELINE_TO_RUN=run_ml_pipeline.py
@@ -29,7 +29,7 @@ services:
     volumes:
       - ./pipelines:/api/pipelines
       - ./shared/:/api/shared
-      - ./.env.local:/api/.env.local
+      - ./pipelines/.env.local:/api/.env.local
     depends_on:
       database:
         condition: service_healthy

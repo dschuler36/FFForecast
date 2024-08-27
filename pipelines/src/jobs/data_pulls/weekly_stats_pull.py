@@ -55,7 +55,7 @@ def join_with_schedule_df(stats_df: pl.DataFrame, sched_df: pl.DataFrame):
 
 
 def join_stats_with_depth_chart(stats_df: pl.DataFrame, depth_df: pl.DataFrame) -> pl.DataFrame:
-    depth_df = depth_df.select(pl.col('gsis_id').alias('player_id'),
+    depth_df = depth_df.select('player_id',
                                'depth_ranking',
                                pl.col('week').cast(pl.Int64).alias('week'),
                                pl.col('season').cast(pl.Int64).alias('season'))
