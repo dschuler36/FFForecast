@@ -27,3 +27,16 @@ class AccuracyService:
         )
         accuracy = (await self.db.execute(stmt)).scalar_one_or_none()
         return accuracy
+
+
+    async def get_completed_season_weeks(self):
+        stmt = (
+            select(PredictionDiff.season, PredictionDiff.week).distinct()
+        )
+        results = await self.db.execute(stmt)
+
+        unpacked_results = [
+            {"season": row.season, "week": row.week}
+            for row in results
+        ]
+        return unpacked_results

@@ -20,3 +20,9 @@ async def get_accuracy_metrics(
         week: int,
         actuals_service: AccuracyService = Depends(deps.get_actuals_service)):
     return await actuals_service.get_accuracy_metrics(season, week)
+
+
+@router.get('/accuracy/completed-weeks')
+async def get_completed_weeks(
+        accuracy_service: AccuracyService = Depends(deps.get_actuals_service)):
+    return await accuracy_service.get_completed_season_weeks()
