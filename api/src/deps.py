@@ -2,7 +2,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database import get_db_session
-from api.services.actuals_service import ActualsService
+from api.services.accuracy_service import AccuracyService
 from api.services.predictions_service import PredictionsService
 from api.services.schedule_service import ScheduleService
 from api.settings import Settings
@@ -22,5 +22,5 @@ def get_schedule_service(db: AsyncSession = Depends(get_db_session)) -> Schedule
 
 def get_actuals_service(
         db: AsyncSession = Depends(get_db_session),
-        predictions_service: PredictionsService = Depends(get_predictions_service)) -> ActualsService:
-    return ActualsService(db, predictions_service)
+        predictions_service: PredictionsService = Depends(get_predictions_service)) -> AccuracyService:
+    return AccuracyService(db, predictions_service)
