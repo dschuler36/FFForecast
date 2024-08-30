@@ -106,6 +106,5 @@ def main(seasons: List[int], week: int = None):
 
     roster_df = pull_roster(seasons, week)
     stats_with_age_df = join_stats_with_roster(stats_with_depth_df, roster_df)
-
     final_df = select_output_cols(stats_with_age_df)
     insert_to_db(final_df)

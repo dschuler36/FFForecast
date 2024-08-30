@@ -15,6 +15,7 @@ class AccuracyService:
         stmt = (
             select(PredictionDiff)
             .where(PredictionDiff.season == season, PredictionDiff.week == week)
+            .order_by(PredictionDiff.fantasy_points.desc())
         )
         preds = (await self.db.execute(stmt)).scalars().all()
         return preds
