@@ -1,4 +1,4 @@
-from jobs.data_pulls import weekly_stats_pull
+from jobs.data_pulls import weekly_stats_pull, weekly_accuracy
 import argparse
 
 def parse_args():
@@ -13,4 +13,5 @@ if __name__ == '__main__':
     season = args.season
     week = args.week
     print(f'Running weekly stats pull for season: {season} and week: {week}')
-    weekly_stats_pull.main([args.season], args.week)
+    weekly_stats_pull.main([season], week)
+    weekly_accuracy.main(season, week)
