@@ -19,3 +19,11 @@ async def get_full_ppr_predictions(
         week: int,
         predictions_service: PredictionsService = Depends(deps.get_predictions_service)):
     return await predictions_service.get_full_ppr_predictions(season, week)
+
+
+@router.get('/predictions/dk_dfs')
+async def get_full_ppr_predictions(
+        season: int,
+        week: int,
+        predictions_service: PredictionsService = Depends(deps.get_predictions_service)):
+    return await predictions_service.get_dk_dfs_predictions(season, week)

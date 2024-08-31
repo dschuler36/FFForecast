@@ -63,3 +63,24 @@ STANDARD_HALF_PPR = PointsConfig(
     pp_receiving_2pt_conversions=2,
     pp_passing_2pt_conversions=2
 )
+
+DK_DFS = PointsConfig(
+    pp_qb_yd=0.04,
+    pp_qb_td=4,
+    pp_rec=1,
+    pp_rec_yd=0.1,
+    pp_rec_td=6,
+    pp_rush_yd=0.1,
+    pp_rush_td=6,
+    pp_fumble=-1,
+    pp_int=-1,
+    qb_yd_bonus_thresh=300,
+    pp_qb_yd_bonus=3,
+    rec_bonus_thresh=100,
+    pp_rec_bonus=3,
+    rush_bonus_thresh=100,
+    pp_rush_bonus=3,
+    pp_rushing_2pt_conversions=2,
+    pp_receiving_2pt_conversions=2,
+    pp_passing_2pt_conversions=2
+)
