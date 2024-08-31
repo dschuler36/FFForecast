@@ -23,19 +23,30 @@ async function getFullPprPredictions(season: number, week: number) {
     return responseData;
 }
 
+
+async function getDKDFSPredictions(season: number, week: number) {
+    const response = await fetch(`${API_BASE_URL}/api/predictions/dk_dfs?season=${season}&week=${week}`);
+    const responseData = await response.json();
+    return responseData;
+}
+
 export const load: Load = async ({ parent }) => {
     try {
         const seasonWeek = await getCurrentSeasonWeek();
-        const season = seasonWeek.season;
-        const week = seasonWeek.week;
+        // const season = seasonWeek.season;
+        // const week = seasonWeek.week;
+        const season = 2023;
+        const week = 1;
         const halfPprPredictions = await getHalfPprPredictions(season, week);
         const fullPprPredictions = await getFullPprPredictions(season, week);
+        const dkDFSPredictions = await getDKDFSPredictions(season, week);
         return {
             props: {
                 season,
                 week,
                 halfPprPredictions, 
-                fullPprPredictions
+                fullPprPredictions,
+                dkDFSPredictions
             }
         };
         } 

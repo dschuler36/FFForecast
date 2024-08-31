@@ -3,7 +3,7 @@ import pandas as pd
 
 from jobs.shared.logging_config import logger
 from jobs.shared.points_calc import calculate_fantasy_points
-from jobs.shared.points_config import PointsConfig, STANDARD_PPR, STANDARD_HALF_PPR
+from jobs.shared.points_config import PointsConfig, STANDARD_PPR, STANDARD_HALF_PPR, DK_DFS
 from jobs.shared.settings import settings
 
 
@@ -45,7 +45,8 @@ def main(season: int, week: int):
     logger.info(f'Running weekly_stats_pull for season {season} and week {week}')
 
     default_league_configs = [(STANDARD_PPR, 'weekly_predictions_std_full_ppr'),
-                              (STANDARD_HALF_PPR, 'weekly_predictions_std_half_ppr')]
+                              (STANDARD_HALF_PPR, 'weekly_predictions_std_half_ppr'),
+                              (DK_DFS, 'weekly_predictions_dk_dfs')]
     predictions_df = read_weekly_predictions_base(season, week)
     for config in default_league_configs:
         fantasy_points_df = calculate_fantasy_points_for_default_configs(predictions_df, config[0])

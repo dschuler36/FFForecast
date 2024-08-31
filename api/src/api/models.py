@@ -49,6 +49,16 @@ class WeeklyPredictionStdFullPPR(Base):
     fantasy_points = Column(Float)
 
 
+class WeeklyPredictionDKDFS(Base):
+    __tablename__ = 'weekly_predictions_dk_dfs'
+
+    season = Column(BigInteger, primary_key=True, nullable=False)
+    week = Column(BigInteger, primary_key=True, nullable=False)
+    player_id = Column(String, primary_key=True, nullable=False)
+
+    fantasy_points = Column(Float)
+
+
 class Schedule(Base):
     __tablename__ = 'schedule'
 

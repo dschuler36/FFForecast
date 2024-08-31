@@ -1,7 +1,8 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.models import WeeklyPredictionBase, WeeklyPredictionStdHalfPPR, WeeklyPredictionStdFullPPR
+from api.models import WeeklyPredictionBase, WeeklyPredictionStdHalfPPR, WeeklyPredictionStdFullPPR, \
+    WeeklyPredictionDKDFS
 
 
 class PredictionsService:
@@ -40,5 +41,17 @@ class PredictionsService:
         unpacked_predictions = [
             {"base": base, "fantasy_points": std_full_ppr}
             for base, std_full_ppr in predictions
+        ]
+        return unpacked_predictions
+
+
+    async def get_dk_dfs_predictions(self, season: int, week: int):
+        stmt = self.get_base_predictions_query(season, week, WeeklyPredictionDKDFS)
+        result = await self.db.execute(stmt)
+        predictions = result.fetchall()  # This returns a list of tuples (WeeklyPredictionBase, WeeklyPredictionStdHalfPPR)
+        # Unpack tuples into a list of dicts or any other structure you need
+        unpacked_predictions = [
+            {"base": base, "fantasy_points": fantasy_points}
+            for base, fantasy_points in predictions
         ]
         return unpacked_predictions
