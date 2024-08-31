@@ -33,10 +33,8 @@ async function getDKDFSPredictions(season: number, week: number) {
 export const load: Load = async ({ parent }) => {
     try {
         const seasonWeek = await getCurrentSeasonWeek();
-        // const season = seasonWeek.season;
-        // const week = seasonWeek.week;
-        const season = 2023;
-        const week = 1;
+        const season = seasonWeek.season;
+        const week = seasonWeek.week;
         const halfPprPredictions = await getHalfPprPredictions(season, week);
         const fullPprPredictions = await getFullPprPredictions(season, week);
         const dkDFSPredictions = await getDKDFSPredictions(season, week);
