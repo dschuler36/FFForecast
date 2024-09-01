@@ -52,7 +52,7 @@ def insert_to_db(df: pd.DataFrame) -> None:
     pl_df.write_database(
         table_name='weekly_predictions_base',
         connection=settings.POSTGRES_CONN_STRING,
-        if_table_exists='replace'
+        if_table_exists='append'
     )
 
 

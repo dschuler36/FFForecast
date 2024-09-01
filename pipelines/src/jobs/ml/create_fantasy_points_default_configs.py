@@ -36,7 +36,7 @@ def insert_to_db(df: pl.DataFrame, table_name: str) -> None:
     df.write_database(
         table_name=table_name,
         connection=settings.POSTGRES_CONN_STRING,
-        if_table_exists='replace'
+        if_table_exists='append'
     )
 
 
