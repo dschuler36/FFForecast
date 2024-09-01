@@ -42,7 +42,7 @@ def insert_to_db(df: pl.DataFrame, table_name: str) -> None:
 
 def main(season: int, week: int):
 
-    logger.info(f'Running weekly_stats_pull for season {season} and week {week}')
+    logger.info(f'Running fantasy points calculation for season {season} and week {week}')
 
     default_league_configs = [(STANDARD_PPR, 'weekly_predictions_std_full_ppr'),
                               (STANDARD_HALF_PPR, 'weekly_predictions_std_half_ppr'),

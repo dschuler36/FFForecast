@@ -71,7 +71,7 @@ def insert_to_db(df: pl.DataFrame) -> None:
     df.write_database(
         table_name='weekly_roster',
         connection=settings.POSTGRES_CONN_STRING,
-        if_table_exists='replace'
+        if_table_exists='append'
     )
 
 def main(season: int, week: int):

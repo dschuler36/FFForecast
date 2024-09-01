@@ -1,9 +1,11 @@
 from typing import List
 
 import nfl_data_py as nfl
+import pandas as pd
 import polars as pl
 
 from jobs.shared.constants import positions
+from jobs.shared.settings import settings
 
 
 def pull_schedules(season: int, week: int = None) -> pl.DataFrame:
@@ -15,15 +17,27 @@ def pull_schedules(season: int, week: int = None) -> pl.DataFrame:
 
 
 def pull_depth_chart(seasons: List[int], week: int) -> pl.DataFrame:
-    depth_df = pl.from_pandas(nfl.import_depth_charts(seasons)) \
-                 .filter(pl.col('position').is_in(positions)) \
-                 .filter(pl.col('position') == pl.col('depth_position')) \
-                 .select('season', 'club_code', 'week', 'depth_team', 'gsis_id', 'position') \
-                 .unique() \
-                 .group_by(['season', 'club_code', 'week', 'gsis_id', 'position']) \
-                 .agg(pl.max('depth_team').cast(pl.Int8).alias('depth_ranking'))
-    if week is not None:
-        depth_df = depth_df.filter(pl.col('week') == week)
+
+    # TODO: temp workaround for week 1 - remove at some point
+    if len(seasons) == 1 and seasons[0] == 2024 and week == 1:
+        depth_df = pl.from_pandas(pd.read_sql(
+            sql=f'select * from depth_chart_tmp where season = {seasons[0]} and week = {week}',
+            con=settings.POSTGRES_CONN_STRING
+        ))
+        depth_df = depth_df.select('season', pl.col('team').alias('club_code'), 'week',
+                                   pl.col('player_id').alias('gsis_id'), 'position',
+                                   pl.col('depth').alias('depth_ranking'))
+    else:
+        depth_df = pl.from_pandas(nfl.import_depth_charts(seasons)) \
+                     .filter(pl.col('position').is_in(positions)) \
+                     .filter(pl.col('position') == pl.col('depth_position')) \
+                     .select('season', 'club_code', 'week', 'depth_team', 'gsis_id', 'position') \
+                     .unique() \
+                     .group_by(['season', 'club_code', 'week', 'gsis_id', 'position']) \
+                     .agg(pl.max('depth_team').cast(pl.Int8).alias('depth_ranking'))
+        if week is not None:
+            depth_df = depth_df.filter(pl.col('week') == week)
+
     return depth_df
 
 
