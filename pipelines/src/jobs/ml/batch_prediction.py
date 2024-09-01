@@ -58,7 +58,7 @@ def insert_to_db(df: pd.DataFrame) -> None:
 
 def main(season: int, week: int):
 
-    logger.info(f'Running weekly_stats_pull for season {season} and week {week}')
+    logger.info(f'Running batch prediction for season {season} and week {week}')
 
     df = read_weekly_roster(season, week)
     subset_df = df[cat_features + numerical_features]
