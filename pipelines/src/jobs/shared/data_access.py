@@ -3,8 +3,10 @@ from typing import List
 import nfl_data_py as nfl
 import pandas as pd
 import polars as pl
+from sqlalchemy import create_engine, MetaData, Table, delete
 
 from jobs.shared.constants import positions
+from jobs.shared.logging_config import logger
 from jobs.shared.settings import settings
 
 
@@ -82,3 +84,30 @@ def pull_stats_agg(seasons: List[int], week: int = None) -> pl.DataFrame:
     if week is not None:
         nfl_df = nfl_df.filter(pl.col('week') == week)
     return nfl_df
+
+
+def upsert_to_db(df: pl.DataFrame, table_name: str, season: int, week: int) -> None:
+    # Have to delete data for the season / week then insert
+    # otherwise, someone who was injured will remain in the predictions from old data
+    engine = create_engine(settings.POSTGRES_CONN_STRING)
+    metadata = MetaData()
+    table = Table(table_name, metadata, autoload_with=engine)
+
+    with engine.begin() as conn:
+        stmt = (
+            delete(table)
+            .where(
+                (table.c.season == season) &
+                (table.c.week == week)
+            )
+        )
+
+        logger.info(f'Deleting data for season {season} and week {week} from {table_name}')
+        conn.execute(stmt)
+
+    logger.info(f'Inserting data for season {season} and week {week} to {table_name}')
+    df.write_database(
+        table_name=table_name,
+        connection=settings.POSTGRES_CONN_STRING,
+        if_table_exists='append'
+    )

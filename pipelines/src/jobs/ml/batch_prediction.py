@@ -3,6 +3,7 @@ import pandas as pd
 import polars as pl
 
 from jobs.shared.constants import cat_features, model_prediction_vars, numerical_features
+from jobs.shared.data_access import upsert_to_db
 from jobs.shared.logging_config import logger
 from jobs.shared.settings import settings
 
@@ -68,4 +69,4 @@ def main(season: int, week: int):
     predictions = create_predictions(subset_df, model, preprocessor)
     formatted_predictions = format_predictions(predictions, subset_df, model_prediction_vars)
     final_df = create_final_predictions_df(formatted_predictions, df, season, week)
-    insert_to_db(final_df)
+    upsert_to_db(pl.from_pandas(final_df), 'weekly_predictions_base', season, week)
