@@ -3,6 +3,7 @@ import pandas as pd
 import polars as pl
 
 from jobs.shared.constants import cat_features, model_prediction_vars, numerical_features
+from jobs.shared.data_access import upsert_to_db
 from jobs.shared.logging_config import logger
 from jobs.shared.settings import settings
 
@@ -52,13 +53,13 @@ def insert_to_db(df: pd.DataFrame) -> None:
     pl_df.write_database(
         table_name='weekly_predictions_base',
         connection=settings.POSTGRES_CONN_STRING,
-        if_table_exists='replace'
+        if_table_exists='append'
     )
 
 
 def main(season: int, week: int):
 
-    logger.info(f'Running weekly_stats_pull for season {season} and week {week}')
+    logger.info(f'Running batch prediction for season {season} and week {week}')
 
     df = read_weekly_roster(season, week)
     subset_df = df[cat_features + numerical_features]
@@ -68,4 +69,4 @@ def main(season: int, week: int):
     predictions = create_predictions(subset_df, model, preprocessor)
     formatted_predictions = format_predictions(predictions, subset_df, model_prediction_vars)
     final_df = create_final_predictions_df(formatted_predictions, df, season, week)
-    insert_to_db(final_df)
+    upsert_to_db(pl.from_pandas(final_df), 'weekly_predictions_base', season, week)

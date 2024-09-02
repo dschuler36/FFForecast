@@ -1,6 +1,7 @@
-import polars as pl
 import pandas as pd
+import polars as pl
 
+from jobs.shared.data_access import upsert_to_db
 from jobs.shared.logging_config import logger
 from jobs.shared.points_calc import calculate_fantasy_points
 from jobs.shared.points_config import PointsConfig, STANDARD_PPR, STANDARD_HALF_PPR, DK_DFS
@@ -28,7 +29,8 @@ def calculate_fantasy_points_for_default_configs(df: pl.DataFrame, points_config
                                            x['receiving_tds'], x['rushing_yards'], x['rushing_tds'],
                                            x['fumbles'], x['rushing_2pt_conversions'], x['receiving_2pt_conversions'],
                                            x['passing_2pt_conversions']),
-        return_dtype=pl.Float64).alias('fantasy_points'))
+        return_dtype=pl.Float64).alias('fantasy_points')) \
+             .select('player_id', 'season', 'week', 'fantasy_points')
 
 
 def insert_to_db(df: pl.DataFrame, table_name: str) -> None:
@@ -36,13 +38,13 @@ def insert_to_db(df: pl.DataFrame, table_name: str) -> None:
     df.write_database(
         table_name=table_name,
         connection=settings.POSTGRES_CONN_STRING,
-        if_table_exists='replace'
+        if_table_exists='append'
     )
 
 
 def main(season: int, week: int):
 
-    logger.info(f'Running weekly_stats_pull for season {season} and week {week}')
+    logger.info(f'Running fantasy points calculation for season {season} and week {week}')
 
     default_league_configs = [(STANDARD_PPR, 'weekly_predictions_std_full_ppr'),
                               (STANDARD_HALF_PPR, 'weekly_predictions_std_half_ppr'),
@@ -50,4 +52,4 @@ def main(season: int, week: int):
     predictions_df = read_weekly_predictions_base(season, week)
     for config in default_league_configs:
         fantasy_points_df = calculate_fantasy_points_for_default_configs(predictions_df, config[0])
-        insert_to_db(fantasy_points_df, config[1])
+        upsert_to_db(fantasy_points_df, config[1], season, week)
