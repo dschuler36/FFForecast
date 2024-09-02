@@ -86,11 +86,12 @@ def upsert_to_db(df: pl.DataFrame, season: int, week: int) -> None:
         )
         conn.execute(stmt)
         logger.info(weekly_roster.name)
-        df.write_database(
-            table_name='weekly_roster',
-            connection=settings.POSTGRES_CONN_STRING,
-            if_table_exists='append'
-        )
+
+    df.write_database(
+        table_name='weekly_roster',
+        connection=settings.POSTGRES_CONN_STRING,
+        if_table_exists='append'
+    )
 
 
 def insert_to_db(df: pl.DataFrame) -> None:
