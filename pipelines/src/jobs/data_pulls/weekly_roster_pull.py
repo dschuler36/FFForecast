@@ -1,10 +1,8 @@
 import pandas as pd
 import polars as pl
-import sqlalchemy
-from sqlalchemy import create_engine, MetaData, Table, update, delete
 
 from jobs.shared.constants import positions
-from jobs.shared.data_access import pull_schedules, pull_depth_chart, pull_roster
+from jobs.shared.data_access import pull_schedules, pull_depth_chart, pull_roster, upsert_to_db
 from jobs.shared.logging_config import logger
 from jobs.shared.settings import settings
 
@@ -69,44 +67,6 @@ def select_output_cols(df: pl.DataFrame) -> pl.DataFrame:
                      'opponent', 'home_away', 'depth_ranking')
 
 
-def upsert_to_db(df: pl.DataFrame, season: int, week: int) -> None:
-    # Have to delete data for the season / week then insert
-    # otherwise, someone who was injured will remain in the predictions from old data
-    engine = create_engine(settings.POSTGRES_CONN_STRING)
-    metadata = MetaData()
-    weekly_roster = Table('weekly_roster', metadata, autoload_with=engine)
-
-    with engine.begin() as conn:
-        stmt = (
-            delete(weekly_roster)
-            .where(
-                (weekly_roster.c.season == season) &
-                (weekly_roster.c.week == week)
-            )
-        )
-        conn.execute(stmt)
-        logger.info(weekly_roster.name)
-
-    df.write_database(
-        table_name='weekly_roster',
-        connection=settings.POSTGRES_CONN_STRING,
-        if_table_exists='append'
-    )
-
-
-def insert_to_db(df: pl.DataFrame) -> None:
-    try:
-        df.write_database(
-            table_name='weekly_roster',
-            connection=settings.POSTGRES_CONN_STRING,
-            if_table_exists='append'
-        )
-    except sqlalchemy.exc.IntegrityError:
-        logger.info('records in weekly_roster already exist. performing update')
-        upsert_to_db(df)
-
-
-
 def main(season: int, week: int):
 
     logger.info(f'Running weekly_roster_pull for season {season} and week {week}')
@@ -128,4 +88,4 @@ def main(season: int, week: int):
     roster_filtered_by_depth_df = join_roster_with_depth_chart(active_players_df, top_depth_df)
     roster_with_opponent_df = join_roster_with_schedule(roster_filtered_by_depth_df, opponent_with_stadium_df)
     output_df = select_output_cols(roster_with_opponent_df)
-    upsert_to_db(output_df, season, week)
+    upsert_to_db(output_df, 'weekly_roster', season, week)
