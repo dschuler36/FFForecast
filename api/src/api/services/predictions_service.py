@@ -13,7 +13,9 @@ class PredictionsService:
     def get_base_predictions_query(season: int, week: int, league_config_predictions):
         stmt = (
             select(WeeklyPredictionBase, league_config_predictions.fantasy_points)
-            .join(league_config_predictions, WeeklyPredictionBase.player_id == league_config_predictions.player_id)
+            .join(league_config_predictions, (WeeklyPredictionBase.player_id == league_config_predictions.player_id) &
+                  (WeeklyPredictionBase.season == league_config_predictions.season) &
+                  (WeeklyPredictionBase.week == league_config_predictions.week))
             .where(
                 WeeklyPredictionBase.season == season,
                 WeeklyPredictionBase.week == week

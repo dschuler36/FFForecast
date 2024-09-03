@@ -28,6 +28,7 @@ def create_predictions(df: pd.DataFrame, model, preprocessor):
 
 def format_predictions(y_pred, X_test, target_variables):
     # Convert predictions to a DataFrame
+    print(target_variables)
     pred_df = pd.DataFrame(y_pred, columns=target_variables)
 
     # Add player_id (and any other relevant identifier columns) from X_test
