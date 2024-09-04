@@ -32,13 +32,6 @@ services:
       database:
         condition: service_healthy
 
-#  mlflow:
-#    image: mlflow
-#    build:
-#      dockerfile: ./mlflow/Dockerfile
-#    ports:
-#      - "5001:5001"
-
   api:
     build:
       context: ./api/
@@ -51,3 +44,25 @@ services:
     depends_on:
       database:
         condition: service_healthy
+
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.16.0
+    container_name: mlflow
+    ports:
+      - "5001:5001"
+    environment:
+      MLFLOW_TRACKING_URI: sqlite:///mlflow.db
+      MLFLOW_ARTIFACT_URI: /mlflow/artifacts
+    volumes:
+      - ./mlflow.db:/mlflow/mlflow.db
+      - ./artifacts:/mlflow/artifacts
+    command: >
+      mlflow server
+      --backend-store-uri ${MLFLOW_TRACKING_URI}
+      --default-artifact-root ${MLFLOW_ARTIFACT_URI}
+      --host 0.0.0.0
+      --port 5001
+
+volumes:
+  mlflow-artifacts:
