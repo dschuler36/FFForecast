@@ -13,8 +13,8 @@ else:
 class Settings(BaseSettings):
     ENV: str
     POSTGRES_CONN_STRING: str
-    FF_PREDICTION_MODEL_FILE: str
-    FF_PREDICTION_PREPROCESSOR_FILE: str
+    FF_PREDICTION_MODEL_NAME: str
+    FF_PREDICTION_PREPROCESSOR_NAME: str
     API_BASE: str
     MLFLOW_TRACKING_URI: str
 

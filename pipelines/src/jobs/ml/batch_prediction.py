@@ -1,6 +1,8 @@
 import joblib
+import mlflow.artifacts
 import pandas as pd
 import polars as pl
+from mlflow import MlflowClient
 
 from jobs.shared.constants import cat_features, model_prediction_vars, numerical_features
 from jobs.shared.data_access import upsert_to_db
@@ -15,9 +17,19 @@ def read_weekly_roster(season: int, week: int) -> pd.DataFrame:
     )
 
 
-def load_model_and_preprocessor(model_filename, preprocessor_filename):
-    model = joblib.load(model_filename)
-    preprocessor = joblib.load(preprocessor_filename)
+def load_model_and_preprocessor():
+    mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
+    client = MlflowClient()
+
+    model_name = settings.FF_PREDICTION_MODEL_NAME
+    preprocessor_name = settings.FF_PREDICTION_PREPROCESSOR_NAME
+
+    model_version = client.get_latest_versions(model_name, stages=["None"])[0].version
+    preprocessor_version = client.get_latest_versions(preprocessor_name, stages=["None"])[0].version
+
+    model = mlflow.sklearn.load_model(f'models:/{model_name}/{model_version}')
+    preprocessor = mlflow.sklearn.load_model(f'models:/{preprocessor_name}/{preprocessor_version}')
+
     return model, preprocessor
 
 
@@ -28,7 +40,6 @@ def create_predictions(df: pd.DataFrame, model, preprocessor):
 
 def format_predictions(y_pred, X_test, target_variables):
     # Convert predictions to a DataFrame
-    print(target_variables)
     pred_df = pd.DataFrame(y_pred, columns=target_variables)
 
     # Add player_id (and any other relevant identifier columns) from X_test
@@ -61,12 +72,11 @@ def insert_to_db(df: pd.DataFrame) -> None:
 def main(season: int, week: int):
 
     logger.info(f'Running batch prediction for season {season} and week {week}')
+    mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
 
     df = read_weekly_roster(season, week)
     subset_df = df[cat_features + numerical_features]
-    model_filename = settings.FF_PREDICTION_MODEL_FILE.format(season=season, week=week)
-    preprocessor_filename = settings.FF_PREDICTION_PREPROCESSOR_FILE.format(season=season, week=week)
-    model, preprocessor = load_model_and_preprocessor(model_filename, preprocessor_filename)
+    model, preprocessor = load_model_and_preprocessor()
     predictions = create_predictions(subset_df, model, preprocessor)
     formatted_predictions = format_predictions(predictions, subset_df, model_prediction_vars)
     final_df = create_final_predictions_df(formatted_predictions, df, season, week)
