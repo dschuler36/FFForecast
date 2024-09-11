@@ -12,6 +12,7 @@ else:
 
 class Settings(BaseSettings):
     POSTGRES_CONN_STRING: str
+    UI_URL: str
 
     class Config:
         env_file = ".env.local" if os.path.exists(".env.local") else ".env"
