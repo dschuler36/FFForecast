@@ -103,11 +103,8 @@ def main(season: int, week: int):
 
     # Pull predictions for season / week
     pred_df = read_weekly_predictions(season, week)
-    print(pred_df.schema)
     fantasy_points_df = read_half_ppr_predictions(season, week)
-    print(fantasy_points_df.schema)
     preds_with_fpoints_df = get_fantasy_points_with_actuals(pred_df, fantasy_points_df)
-    print(preds_with_fpoints_df.schema)
     actuals_df = read_weekly_actuals(season, week)
     merged_df = merge_preds_actuals(preds_with_fpoints_df, actuals_df)
     diff_df = calculate_differences(merged_df)

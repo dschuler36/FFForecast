@@ -61,6 +61,9 @@ def pull_roster(seasons: List[int], week: int) -> pl.DataFrame:
     if week is not None:
         nfl_df = nfl_df.filter(pl.col('week') == week)
 
+        if len(nfl_df) == 0:
+            raise ValueError(f'No weekly roster data found for season {seasons} and week {week}')
+
     return nfl_df
 
 
