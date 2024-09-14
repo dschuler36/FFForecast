@@ -1,10 +1,10 @@
 <svelte:head>
-  <title>About | NumbersFF</title>
-  <meta name="description" content="About NumbersFF" />
+  <title>About | FFForecast</title>
+  <meta name="description" content="About FFForecast" />
 </svelte:head>
 
 <div class="container mx-auto px-4 py-8">
-  <h1 class="text-5xl font-bold mb-8 text-center">About NumbersFF</h1>
+  <h1 class="text-5xl font-bold mb-8 text-center">About FFForecast</h1>
   
   <div class="card bg-base-200 shadow-xl mb-8">
     <div class="card-body">
