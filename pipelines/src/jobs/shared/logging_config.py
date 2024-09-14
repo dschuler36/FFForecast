@@ -1,8 +1,7 @@
-
 import logging
 
 def setup_logger():
-    logger = logging.getLogger('numbersff-pipelines')
+    logger = logging.getLogger('FFForecast-pipelines')
     logger.setLevel(logging.INFO)
 
 
